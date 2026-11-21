@@ -169,6 +169,7 @@ sim/coordinador.py       reloj global, barrera, detección de caídas, registro 
 dashboard/               servidor FastAPI + WebSocket y página web
 analitica/               benchmark.py (speedup/eficiencia), reporte.py y mineria.py
 docs/benchmark/          resultados del benchmark usados en el documento IEEE
+docs/articulo/           documento del avance en formato IEEE (HTML fuente y PDF)
 despliegue/              Docker Compose y configuración de NATS
 ```
 

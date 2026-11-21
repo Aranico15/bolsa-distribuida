@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Bolsa Distribuida - Avance IEEE</title>
+<style>
+  @page { size: letter; margin: 0.7in 0.625in 0.8in 0.625in; }
+  * { box-sizing: border-box; }
+  body { font-family: "Liberation Serif", "Times New Roman", Times, serif; font-size: 10pt; line-height: 1.17;
+         color: #000; margin: 0; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  .cabecera { text-align: center; margin-bottom: 14pt; }
+  h1.titulo { font-size: 22pt; font-weight: normal; line-height: 1.15; margin: 0 0 10pt; }
+  .autores { font-size: 10.5pt; margin-bottom: 4pt; }
+  .afiliacion { font-size: 9pt; font-style: italic; line-height: 1.3; }
+  .cuerpo { column-count: 2; column-gap: 0.25in; }
+  .resumen { font-weight: bold; font-size: 9pt; margin: 0 0 6pt; }
+  .resumen i { font-weight: bold; }
+  .terminos { font-weight: bold; font-size: 9pt; margin: 0 0 8pt; }
+  h2 { font-size: 10pt; font-weight: normal; font-variant: small-caps; text-align: center; letter-spacing: .02em;
+       margin: 10pt 0 4pt; break-after: avoid; }
+  h3 { font-size: 10pt; font-weight: normal; font-style: italic; margin: 6pt 0 2pt; break-after: avoid; }
+  p { margin: 0 0 3pt; text-indent: 1em; }
+  p.sin { text-indent: 0; }
+  ul, ol { margin: 2pt 0 4pt 0; padding-left: 1.3em; }
+  li { margin-bottom: 1.5pt; }
+  figure { margin: 6pt 0 8pt; break-inside: avoid; text-align: center; }
+  figure img { width: 88%; }
+  figcaption { font-size: 8pt; text-align: justify; margin-top: 3pt; }
+  table { border-collapse: collapse; width: 100%; font-size: 8pt; margin: 2pt 0 8pt; break-inside: avoid; }
+  .tabla { break-inside: avoid; }
+  .tabla .rotulo { font-size: 8pt; text-align: center; font-variant: small-caps; margin-top: 6pt; }
+  th, td { border-top: .6pt solid #000; border-bottom: .6pt solid #000; padding: 1.6pt 3pt; text-align: center; vertical-align: top; }
+  td.izq, th.izq { text-align: left; }
+  .eq { text-align: center; margin: 3pt 0 4pt; font-style: italic; text-indent: 0; }
+  code { font-family: "Liberation Mono", "Courier New", monospace; font-size: 8.3pt; }
+  .algo { border-top: .8pt solid #000; border-bottom: .8pt solid #000; font-size: 8.4pt; margin: 6pt 0 8pt;
+          padding: 2pt 0 3pt; break-inside: avoid; text-align: left; }
+  .algo b.t { display: block; border-bottom: .5pt solid #000; padding-bottom: 2pt; margin-bottom: 2pt; }
+  .algo div { padding-left: 1em; text-indent: -1em; margin: 0; }
+  .algo .s1 { padding-left: 2em; } .algo .s2 { padding-left: 3em; }
+  .refs { font-size: 7.6pt; }
+  .refs ol { padding-left: 2.1em; }
+  .refs li { margin-bottom: 1pt; text-align: left; }
+  .ia { border: .6pt solid #000; padding: 4pt 6pt; margin: 6pt 0; font-size: 9pt; break-inside: avoid; }
+  .ia p { text-indent: 0; }
+</style>
+</head>
+<body>
+
+<div class="cabecera">
+  <h1 class="titulo">Bolsa Distribuida: simulación paralela y distribuida de un mercado bursátil multiagente con datos oficiales de Colombia</h1>
+  <div class="autores">Nicolás Cruz, Camilo Barbosa, Julián Sandoval, Sergio Campos y Daniel Ajiaco</div>
+  <div class="afiliacion">Facultad de Ingeniería de Datos e Inteligencia Artificial, Universidad Santo Tomás, Seccional Tunja, Colombia<br>
+    Proyecto Integrador, cuarto semestre &middot; Docente: <!--DOCENTE-->________________ &middot; Noviembre de 2026<br>
+    Repositorio: https://github.com/Aranico15/bolsa-distribuida</div>
+</div>
+
+<div class="cuerpo">
+
+<p class="resumen"><i>Resumen</i>&mdash;Este avance presenta Bolsa Distribuida, una simulación de un mercado bursátil con 1.300 agentes (hogares, empresarios, inversionistas, bancos y formadores de liquidez) calibrada con datos oficiales y públicos del Banco Mundial, el Banco de la República y el DANE. La economía se reparte en cinco nodos (Tunja, ciudades capitales, departamentos, nivel nacional y mercado internacional) que pueden correr en computadores distintos y se comunican mediante mensajería publicar/suscribir sobre NATS, con un reloj global y una barrera de sincronización. Dentro de cada nodo, la decisión de inversión, que evalúa riesgo por Monte Carlo, se paraleliza en Python con <i>multiprocessing</i> y con <i>threading</i> mediante descomposición de dominio con generadores aleatorios por bloque, de modo que el resultado es idéntico con cualquier número de trabajadores. En un equipo de 4 núcleos, con 40.000 agentes se obtiene un speedup de 3,75 y una eficiencia de 0,94; la ley de Amdahl ajustada indica una fracción serial cercana al 2,3&nbsp;%. El proyecto integra computación paralela y distribuida, redes, minería de datos y analítica, y se alinea con los ODS 8 y 9.</p>
+
+<p class="terminos"><i>Términos índice</i>&mdash;computación paralela, sistemas distribuidos, simulación basada en agentes, speedup, multiprocessing, NATS, minería de datos, ODS.</p>
+
+<h2>I. Introducción</h2>
+<p>Los mercados financieros son sistemas complejos: el precio de una acción en Bogotá depende de lo que hacen miles de hogares, empresas e inversionistas, de la tasa del Banco de la República y de lo que ocurre con el petróleo o la tasa de cambio en el exterior. Los modelos basados en agentes permiten estudiar esa interacción &laquo;de abajo hacia arriba&raquo;, simulando las decisiones individuales y observando los fenómenos agregados que emergen [1], [2]. Su costo es computacional: cada agente debe decidir en cada paso de tiempo, y si la decisión incluye una evaluación de riesgo por Monte Carlo, el trabajo crece con el número de agentes, de activos y de escenarios.</p>
+<p>Bolsa Distribuida aborda ese costo en dos niveles. En el nivel <i>distribuido</i>, la economía se divide geográficamente en cinco nodos que pueden ejecutarse en cinco computadores y que intercambian órdenes de compra y venta por la red. En el nivel <i>paralelo</i>, dentro de cada nodo, la decisión de inversión se reparte entre varios procesos o hilos del mismo equipo. Además, las corridas generan series de tiempo que se analizan con técnicas de analítica y minería de datos, y se visualizan en un tablero web en tiempo real.</p>
+<p>Este documento corresponde al avance del Proyecto Integrador. La Sección II plantea el problema y su relación con los Objetivos de Desarrollo Sostenible (ODS); la Sección III describe la estructura general del sistema; la Sección IV presenta el módulo paralelo y su reporte inicial de rendimiento; la Sección V explica la integración con las asignaturas de cuarto semestre, y la Sección VI resume cómo reproducir los resultados.</p>
+
+<h2>II. Planteamiento del problema</h2>
+<h3>A. Problema</h3>
+<p>En Colombia, entender cómo se transmiten los choques económicos entre territorios (por ejemplo, cómo una subida de tasas o una caída del petróleo afecta de forma distinta a Tunja, a las grandes capitales y a los departamentos) suele requerir modelos agregados que no muestran el comportamiento de los agentes ni permiten experimentar. Una simulación basada en agentes que sea útil para ese propósito debe cumplir tres condiciones a la vez: (i) partir de datos reales y verificables, (ii) tener suficientes agentes y activos para que emerjan dinámicas de mercado, y (iii) ejecutarse en un tiempo razonable con el hardware disponible en una universidad, que normalmente son varios computadores personales y no un clúster.</p>
+<p class="sin"><b>Pregunta de investigación:</b> ¿cómo diseñar una simulación de mercado multiagente, calibrada con datos oficiales, que distribuya la economía entre varios computadores y acelere la decisión de los agentes con paralelismo en Python, sin que la paralelización altere los resultados?</p>
+<h3>B. Objetivos</h3>
+<p class="sin"><i>General:</i> diseñar e implementar una plataforma paralela y distribuida de simulación económica para observar, medir y analizar mercados regionales, nacionales e internacionales.</p>
+<p class="sin"><i>Específicos:</i></p>
+<ol>
+  <li>Modelar agentes, empresas, bancos y reglas por país a partir de datos públicos oficiales.</li>
+  <li>Distribuir la economía en cinco nodos coordinados por un reloj global sobre la red.</li>
+  <li>Paralelizar la decisión de inversión con <i>multiprocessing</i> y <i>threading</i>, y medir speedup y eficiencia.</li>
+  <li>Registrar indicadores y aplicar analítica y minería de datos sobre las corridas.</li>
+  <li>Garantizar que todo el proceso sea reproducible desde el repositorio.</li>
+</ol>
+<h3>C. Relación con los Objetivos de Desarrollo Sostenible</h3>
+<p>La Agenda 2030 [6] orienta el proyecto en tres ODS:</p>
+<ul>
+  <li><b>ODS 8, Trabajo decente y crecimiento económico.</b> El modelo simula empleo, desempleo, emprendimiento, quiebras y acceso a crédito, y permite explorar cómo los choques afectan el empleo por territorio. Se relaciona con la meta 8.10, sobre la capacidad de las instituciones financieras y el acceso a servicios financieros.</li>
+  <li><b>ODS 9, Industria, innovación e infraestructura.</b> El sistema muestra cómo aprovechar infraestructura de cómputo y redes ya existente (computadores personales en una LAN o una VPN) para cálculo intensivo, en línea con las metas 9.5 (investigación y capacidad tecnológica) y 9.c (acceso a TIC).</li>
+  <li><b>ODS 10, Reducción de las desigualdades.</b> Cada corrida mide el índice de Gini de la riqueza por nodo, lo que permite estudiar cómo cambian las brechas entre territorios.</li>
+</ul>
+<p>El proyecto no pretende pronosticar la economía; es una herramienta experimental y educativa para razonar sobre estos fenómenos con datos reales.</p>
+
+<h2>III. Estructura general</h2>
+<h3>A. Nodos y datos</h3>
+<p>La Tabla I resume los cinco nodos. Los datos de partida son públicos y gratuitos: indicadores del Banco Mundial para diez países (inflación, crecimiento, desempleo, tasas, tipo de cambio, recaudo y PIB per cápita) [9], 730 días de la Tasa Representativa del Mercado publicada en datos.gov.co [10], la población del Censo 2018 del DANE [11] y el salario mínimo. Un script descarga los datos crudos y otro los procesa en <code>config/semilla.json</code>.</p>
+<div class="tabla">
+<div class="rotulo">Tabla I<br>Nodos de la simulación</div>
+<table>
+  <tr><th class="izq">Nodo</th><th class="izq">Qué simula</th><th style="width:3.2em">Agentes</th></tr>
+  <tr><td class="izq">tunja</td><td class="izq">Economía de Tunja y sus sectores</td><td>220</td></tr>
+  <tr><td class="izq">capitales</td><td class="izq">Bogotá, Medellín, Cali, Barranquilla, Bucaramanga y Cartagena</td><td>300</td></tr>
+  <tr><td class="izq">departamentos</td><td class="izq">Ocho departamentos, entre ellos Boyacá</td><td>320</td></tr>
+  <tr><td class="izq">colombia</td><td class="izq">Grandes empresas y Banco de la República (regla de Taylor [13])</td><td>180</td></tr>
+  <tr><td class="izq">internacional</td><td class="izq">Nueve países con reglas propias, petróleo, TRM; reloj global y tablero</td><td>280</td></tr>
+</table>
+</div>
+<h3>B. Arquitectura</h3>
+<p>La Fig. 1 muestra la arquitectura. Un servidor NATS [8] en el computador principal transporta mensajes JSON por asuntos de publicación y suscripción (puerto TCP 4222, autenticación por token). El <i>coordinador</i> emite cada <i>tick</i> (un día hábil) y espera la confirmación de todos los nodos vivos, con un tiempo límite: es una barrera de sincronización. Un nodo que no responde durante tres ticks se marca como caído y el resto continúa; al volver, recupera su último <i>snapshot</i> y se reincorpora. Si los equipos no comparten red local, la misma configuración funciona sobre una VPN en malla (Tailscale).</p>
+<figure>
+  <img src="../arquitectura.svg" alt="Arquitectura">
+  <figcaption>Fig. 1. Arquitectura: cinco nodos de simulación, el coordinador (reloj global) y el tablero web conectados por NATS.</figcaption>
+</figure>
+<h3>C. Ciclo de un tick</h3>
+<p>En cada tick cada nodo: (1) recibe el estado del mundo (TRM, petróleo, tasas) y la política monetaria; (2) liquida las ejecuciones que le llegaron de otros nodos; (3) procesa su economía (salarios, impuestos, consumo, crédito, quiebras, contratación, emprendimiento, inflación); (4) corre su mercado, una subasta doble continua con un formador de liquidez, en la que los inversionistas deciden con el núcleo paralelo; (5) envía las órdenes sobre activos de otros nodos, y (6) publica su estado y confirma el tick. Las órdenes remotas reservan efectivo con conversión por TRM, se validan con las reglas del país destino (por ejemplo, topes de propiedad extranjera) y la liquidación regresa al nodo de origen.</p>
+<h3>D. Componentes de software</h3>
+<p>El sistema está escrito en Python. <code>sim/</code> contiene el modelo económico, el mercado, el núcleo paralelo, el servicio de nodo y el coordinador; <code>dashboard/</code> un servidor FastAPI con WebSocket y vistas web con mapas (D3) y velas japonesas; <code>analitica/</code> el benchmark, el reporte de validación y la minería de datos; <code>despliegue/</code> archivos de Docker Compose para el computador principal y los nodos.</p>
+
+<h2>IV. Módulo paralelo</h2>
+<h3>A. Núcleo de cómputo</h3>
+<p>El paso más costoso de cada tick es la decisión de inversión. Cada agente elige <i>k</i>&nbsp;=&nbsp;8 activos candidatos (con sesgo hacia su mercado local) y para cada uno simula <i>S</i>&nbsp;=&nbsp;64 trayectorias de <i>H</i>&nbsp;=&nbsp;20 días con un paseo aleatorio logarítmico. Con ellas estima el retorno esperado, el CVaR al 5&nbsp;% y la caída máxima promedio, y calcula la utilidad</p>
+<p class="eq">U = E[R] &minus; &lambda; &middot; 0,15 &middot; (CVaR<sub>5%</sub> + 0,5 &middot; DD),</p>
+<p class="sin">donde &lambda; es la aversión al riesgo del agente. Compra el candidato de mayor utilidad si supera un umbral, o vende el de menor utilidad entre los que tiene. Son <i>k&middot;S&middot;H</i>&nbsp;=&nbsp;10.240 números aleatorios por agente y tick; con 40.000 agentes, unos 410 millones. El cálculo está vectorizado con NumPy [12] y la decisión de un agente no depende de la de los demás en el mismo tick, así que el problema es paralelizable por datos.</p>
+<h3>B. Diseño de la paralelización</h3>
+<ul>
+  <li><b>Descomposición de dominio:</b> los agentes se agrupan en sub-bloques de 256. Cada sub-bloque crea su propio generador aleatorio a partir de la pareja (semilla del tick, número de sub-bloque). Por eso el resultado no depende de cuántos trabajadores participen ni del orden en que terminen.</li>
+  <li><b>Balance de carga:</b> los sub-bloques se reparten en bloques contiguos de tamaño casi igual, uno por trabajador; el costo por agente es homogéneo.</li>
+  <li><b>Dos modelos de ejecución:</b> <code>ProcessPoolExecutor</code> (<i>multiprocessing</i>) crea procesos con su propio intérprete y GIL; <code>ThreadPoolExecutor</code> (<i>threading</i>) usa hilos que comparten memoria [7]. Los hilos solo escalan en la parte del cálculo en la que NumPy libera el GIL.</li>
+  <li><b>Integración:</b> el nodo se lanza con <code>--procesos N</code> (0 = todos los núcleos) y el pool se crea una sola vez y se reutiliza en todos los ticks.</li>
+</ul>
+<div class="algo">
+  <b class="t">Algoritmo 1. Decisión paralela (sim/kernel.py)</b>
+  <div><b>Entrada:</b> agentes 0..n&minus;1, semilla <i>s</i>, trabajadores <i>p</i></div>
+  <div>1: B &larr; &lceil;n / 256&rceil; sub-bloques; repartir B en <i>p</i> grupos contiguos</div>
+  <div>2: <b>para cada</b> grupo <i>g</i> <b>en paralelo</b> (proceso o hilo):</div>
+  <div class="s1">3: <b>para cada</b> sub-bloque <i>b</i> de <i>g</i>:</div>
+  <div class="s2">4: rng &larr; generador(<i>s</i>, <i>b</i>)</div>
+  <div class="s2">5: simular k&times;S&times;H trayectorias; calcular E[R], CVaR, DD, U</div>
+  <div class="s2">6: emitir órdenes de compra o venta del sub-bloque</div>
+  <div>7: unir los resultados en orden de agente y devolverlos</div>
+</div>
+<h3>C. Metodología de medición</h3>
+<p>Se mide escalamiento fuerte (tamaño fijo) con 5.000, 20.000 y 40.000 agentes y 200 activos, generados con semilla fija. Para cada número de trabajadores <i>p</i>&nbsp;&isin;&nbsp;{1,&nbsp;2,&nbsp;4,&nbsp;N} se toma la mediana de cinco repeticiones después de calentar el pool. <i>T</i>(1) es la versión secuencial (el mismo código sin pool). Antes de medir, el programa verifica que la salida con <i>p</i> trabajadores sea idéntica, elemento por elemento, a la secuencial. Se calculan</p>
+<p class="eq">S(p) = T(1) / T(p), &nbsp;&nbsp; E(p) = S(p) / p,</p>
+<p class="sin">la fracción serial experimental de Karp-Flatt <i>e</i>&nbsp;=&nbsp;(1/S&nbsp;&minus;&nbsp;1/p)/(1&nbsp;&minus;&nbsp;1/p) [4] y la fracción serial <i>f</i> que mejor ajusta la ley de Amdahl S(p)&nbsp;=&nbsp;1/(f&nbsp;+&nbsp;(1&minus;f)/p) [3]. Estas mediciones se tomaron en un equipo Linux con 4 núcleos lógicos (Intel Xeon a 2,1&nbsp;GHz), Python 3.13 y NumPy 2.5; en este equipo N&nbsp;=&nbsp;4. Todo se ejecuta con <code>python -m analitica.benchmark</code>.</p>
+<h3>D. Resultados iniciales</h3>
+<p>La Tabla II y las Figs. 2 y 3 muestran los resultados. En las tres cargas y con ambos modelos, la salida paralela fue idéntica a la secuencial.</p>
+<div class="tabla">
+<div class="rotulo">Tabla II<br>Tiempo, speedup y eficiencia (mediana de 5 repeticiones)</div>
+<table>
+  <tr><th rowspan="2">Agentes</th><th rowspan="2">p</th><th colspan="3">multiprocessing</th><th colspan="3">threading</th></tr>
+  <tr><th>T (s)</th><th>S</th><th>E</th><th>T (s)</th><th>S</th><th>E</th></tr>
+  <tr><td>5.000</td><td>1</td><td>1,240</td><td>1,00</td><td>1,00</td><td>1,240</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>0,657</td><td>1,89</td><td>0,94</td><td>0,600</td><td>2,07</td><td>1,03</td></tr>
+  <tr><td></td><td>4</td><td>0,352</td><td>3,52</td><td>0,88</td><td>0,335</td><td>3,70</td><td>0,93</td></tr>
+  <tr><td>20.000</td><td>1</td><td>4,731</td><td>1,00</td><td>1,00</td><td>4,731</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>2,534</td><td>1,87</td><td>0,93</td><td>2,634</td><td>1,80</td><td>0,90</td></tr>
+  <tr><td></td><td>4</td><td>1,358</td><td>3,48</td><td>0,87</td><td>1,513</td><td>3,13</td><td>0,78</td></tr>
+  <tr><td>40.000</td><td>1</td><td>10,249</td><td>1,00</td><td>1,00</td><td>10,249</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>5,334</td><td>1,92</td><td>0,96</td><td>5,350</td><td>1,92</td><td>0,96</td></tr>
+  <tr><td></td><td>4</td><td>2,735</td><td>3,75</td><td>0,94</td><td>2,763</td><td>3,71</td><td>0,93</td></tr>
+</table>
+</div>
+<figure>
+  <img src="../benchmark/speedup.png" alt="Speedup">
+  <figcaption>Fig. 2. Speedup frente al número de procesos o hilos. Línea punteada negra: speedup ideal S(p)&nbsp;=&nbsp;p.</figcaption>
+</figure>
+<figure>
+  <img src="../benchmark/eficiencia.png" alt="Eficiencia">
+  <figcaption>Fig. 3. Eficiencia E(p)&nbsp;=&nbsp;S(p)/p para las tres cargas y los dos modelos.</figcaption>
+</figure>
+<h3>E. Discusión</h3>
+<p>Con <i>multiprocessing</i>, la eficiencia con 4 procesos sube de 0,87&ndash;0,88 en las cargas pequeña y mediana a 0,94 con 40.000 agentes: al crecer el problema, el costo fijo de crear las tareas y de copiar (serializar) los arreglos de entrada y salida entre procesos pesa menos frente al cómputo. Para esa carga, la ley de Amdahl ajustada da <i>f</i>&nbsp;&asymp;&nbsp;0,023 (Karp-Flatt con <i>p</i>&nbsp;=&nbsp;4: 0,022), lo que sugiere un límite teórico de unas 40 veces si solo influyera la parte serial; en la práctica, el ancho de banda de memoria y el costo de comunicación aparecerán antes.</p>
+<p>El resultado de <i>threading</i> es interesante: aunque Python tiene GIL, los hilos alcanzan un speedup de 3,70 con 5.000 agentes, porque la mayor parte del tiempo se gasta dentro de NumPy (generación de normales, sumas acumuladas, ordenamiento), que libera el GIL. Con 20.000 agentes, en cambio, los hilos rinden menos (eficiencia 0,78) que los procesos, lo que atribuimos a que comparten la caché y el ancho de banda de memoria y a la parte de Python puro que sí retiene el GIL. La eficiencia de 1,03 con 2 hilos y 5.000 agentes está dentro de la variación de la medición (la desviación estándar es de 0,01 a 0,05&nbsp;s). Por su aislamiento y su escalamiento más estable, el simulador usa procesos por defecto.</p>
+<p>Limitaciones de este reporte inicial: se midió en un solo equipo de 4 núcleos, con datos sintéticos de la misma forma que los del simulador. Para la entrega final se repetirán las mediciones en los computadores del equipo, con más núcleos, y se medirá el escalamiento débil, que según la ley de Gustafson [5] es el más relevante cuando el número de agentes crece con los recursos, y el rendimiento distribuido en los cinco computadores (LAN frente a VPN).</p>
+
+<h2>V. Integración con otras asignaturas</h2>
+<p>La Tabla III resume cómo el proyecto integra las asignaturas de cuarto semestre.</p>
+<div class="tabla">
+<div class="rotulo">Tabla III<br>Integración con las asignaturas de cuarto semestre</div>
+<table>
+  <tr><th class="izq">Asignatura</th><th class="izq">Componente del proyecto</th></tr>
+  <tr><td class="izq">Computación paralela y distribuida</td><td class="izq">Núcleo paralelo con procesos e hilos; cinco nodos distribuidos; reloj global con barrera; tolerancia a fallos con detección de nodos caídos y <i>snapshots</i>.</td></tr>
+  <tr><td class="izq">Redes e infraestructura</td><td class="izq">Mensajería publicar/suscribir (NATS, TCP 4222) con protocolo JSON propio y autenticación por token; despliegue en LAN o VPN (Tailscale); medición de latencia por nodo y tick; Docker Compose.</td></tr>
+  <tr><td class="izq">Minería de datos</td><td class="izq">K-means [14] sobre indicadores estandarizados por nodo para agrupar perfiles económicos; detección robusta de atípicos con mediana y MAD (umbral 3,5) [15].</td></tr>
+  <tr><td class="izq">Analítica de datos</td><td class="izq">Validación contra datos oficiales; Gini, quiebras y emprendimiento; correlaciones entre mercados; tablero web en tiempo real con mapas y velas japonesas.</td></tr>
+</table>
+</div>
+<p>Como ejemplo de la integración, en una corrida de prueba de 250 ticks (cerca de un año hábil) el reporte compara la simulación con los datos oficiales: volatilidad diaria de la TRM de 0,89&nbsp;% frente a 0,78&nbsp;% real; inflación de Colombia de 3,3&nbsp;% frente a 5,1&nbsp;%; desempleo de 4,9&nbsp;% frente a 8,3&nbsp;%, y tasa de política de 8,25&nbsp;% frente a 8,21&nbsp;% estimada con la regla de Taylor. La misma corrida alimenta la minería de datos, que agrupa los cinco nodos en tres perfiles y marca como atípicos sobre todo picos de latencia de red. Estas cifras muestran que la calibración del empleo aún debe mejorar, trabajo previsto para la entrega final.</p>
+
+<h2>VI. Reproducibilidad</h2>
+<p>El código está en el repositorio indicado en el encabezado. Con Python 3.10 o superior, <code>reproducir.bat</code> (Windows) o <code>reproducir.sh</code> (Linux/macOS) instala las dependencias, descarga los datos oficiales y regenera la semilla (o usa la incluida si no hay internet), ejecuta el benchmark, corre 250 ticks de la simulación distribuida completa y genera el reporte y la minería de datos. Las semillas aleatorias son fijas y el núcleo paralelo es determinista respecto al número de trabajadores. Los estados intermedios, las corridas y los datos crudos no se versionan porque se regeneran.</p>
+
+<h2>VII. Conclusiones y trabajo futuro</h2>
+<p>El avance cumple los tres elementos del módulo paralelo: una implementación en Python con <i>multiprocessing</i> y <i>threading</i>, una verificación de que el paralelismo no cambia el resultado y un reporte inicial de speedup y eficiencia, con 3,75 y 0,94 para 4 procesos en la carga mayor. La arquitectura distribuida ya funciona de punta a punta en un solo equipo. Para la entrega final queda: medir en los cinco computadores (LAN y VPN), repetir el benchmark en equipos con más núcleos, calibrar el mercado laboral y ampliar las reglas por país.</p>
+
+<div class="ia">
+<p><b>Declaración de uso de inteligencia artificial.</b> El equipo usó un asistente de IA generativa (Claude, de Anthropic) como apoyo en partes del proyecto: escritura y depuración de partes del código, preparación de gráficas y redacción y revisión de este documento. No todo el trabajo se hizo con IA. La idea del proyecto, su alcance, la elección de las fuentes de datos y de los territorios, las decisiones de diseño y la revisión de los resultados son del equipo, que verificó el contenido entregado y responde por él.</p>
+</div>
+
+<div class="refs">
+<h2>Referencias</h2>
+<ol>
+  <li>J. D. Farmer y D. Foley, &ldquo;The economy needs agent-based modelling,&rdquo; <i>Nature</i>, vol. 460, pp. 685&ndash;686, 2009.</li>
+  <li>B. LeBaron, &ldquo;Agent-based computational finance,&rdquo; en <i>Handbook of Computational Economics</i>, vol. 2, L. Tesfatsion y K. L. Judd, Eds. Ámsterdam: Elsevier, 2006, pp. 1187&ndash;1233.</li>
+  <li>G. M. Amdahl, &ldquo;Validity of the single processor approach to achieving large scale computing capabilities,&rdquo; en <i>Proc. AFIPS Spring Joint Computer Conf.</i>, 1967, pp. 483&ndash;485.</li>
+  <li>A. H. Karp y H. P. Flatt, &ldquo;Measuring parallel processor performance,&rdquo; <i>Commun. ACM</i>, vol. 33, no. 5, pp. 539&ndash;543, 1990.</li>
+  <li>J. L. Gustafson, &ldquo;Reevaluating Amdahl&rsquo;s law,&rdquo; <i>Commun. ACM</i>, vol. 31, no. 5, pp. 532&ndash;533, 1988.</li>
+  <li>Naciones Unidas, &ldquo;Transformar nuestro mundo: la Agenda 2030 para el Desarrollo Sostenible,&rdquo; Res. A/RES/70/1, 2015.</li>
+  <li>Python Software Foundation, &ldquo;concurrent.futures: Launching parallel tasks,&rdquo; <i>Python 3 Documentation</i>. [En línea]. Disponible: https://docs.python.org/3/library/concurrent.futures.html</li>
+  <li>NATS Authors, &ldquo;NATS Documentation.&rdquo; [En línea]. Disponible: https://docs.nats.io</li>
+  <li>Banco Mundial, &ldquo;World Development Indicators.&rdquo; [En línea]. Disponible: https://data.worldbank.org</li>
+  <li>Banco de la República, &ldquo;Tasa de Cambio Representativa del Mercado (TRM),&rdquo; datos.gov.co. [En línea]. Disponible: https://www.datos.gov.co/resource/32sa-8pi3</li>
+  <li>DANE, &ldquo;Censo Nacional de Población y Vivienda 2018.&rdquo; [En línea]. Disponible: https://www.dane.gov.co</li>
+  <li>C. R. Harris <i>et al.</i>, &ldquo;Array programming with NumPy,&rdquo; <i>Nature</i>, vol. 585, pp. 357&ndash;362, 2020.</li>
+  <li>J. B. Taylor, &ldquo;Discretion versus policy rules in practice,&rdquo; <i>Carnegie-Rochester Conf. Series on Public Policy</i>, vol. 39, pp. 195&ndash;214, 1993.</li>
+  <li>J. MacQueen, &ldquo;Some methods for classification and analysis of multivariate observations,&rdquo; en <i>Proc. 5th Berkeley Symp. Math. Statist. Probab.</i>, vol. 1, 1967, pp. 281&ndash;297.</li>
+  <li>B. Iglewicz y D. C. Hoaglin, <i>How to Detect and Handle Outliers</i>. Milwaukee, WI: ASQC Quality Press, 1993.</li>
+</ol>
+</div>
+
+</div>
+</body>
+</html>
