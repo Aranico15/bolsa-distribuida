@@ -1,0 +1,155 @@
+{
+  "fuentes": {
+    "paises": "Banco Mundial API v2 (api.worldbank.org), último año disponible",
+    "trm": "Banco de la República, TRM diaria vía datos.gov.co (32sa-8pi3)",
+    "poblacion": "DANE, Censo Nacional de Población 2018 (Marco Geoestadístico Nacional), data/raw/poblacion_dane.csv"
+  },
+  "paises": {
+    "BRA": {
+      "inflacion": 5.017,
+      "crecimiento": 2.286,
+      "desempleo": 5.97,
+      "tasa_politica": 8.025,
+      "tasa_prestamo": 45.333,
+      "fx_usd": 5.58728623856661,
+      "recaudo_pib": 15.41,
+      "pib_pc_usd": 10713.3,
+      "renta_empresas": 0.34,
+      "anio_dato": "2025"
+    },
+    "CHL": {
+      "inflacion": 4.213,
+      "crecimiento": 2.459,
+      "desempleo": 8.974,
+      "tasa_politica": 6.819,
+      "tasa_prestamo": null,
+      "fx_usd": 951.329454191033,
+      "recaudo_pib": 18.265,
+      "pib_pc_usd": 17994.6,
+      "renta_empresas": 0.27,
+      "anio_dato": "2025"
+    },
+    "CHN": {
+      "inflacion": 0.06,
+      "crecimiento": 4.96,
+      "desempleo": 4.615,
+      "tasa_politica": 0.589,
+      "tasa_prestamo": 4.35,
+      "fx_usd": 7.18984737402171,
+      "recaudo_pib": 7.018,
+      "pib_pc_usd": 13862.0,
+      "renta_empresas": 0.25,
+      "anio_dato": "2025"
+    },
+    "COL": {
+      "inflacion": 5.142,
+      "crecimiento": 2.642,
+      "desempleo": 8.29,
+      "tasa_politica": 8.213,
+      "tasa_prestamo": 14.311,
+      "fx_usd": 4053.13583333333,
+      "recaudo_pib": 15.22,
+      "pib_pc_usd": 8561.6,
+      "renta_empresas": 0.35,
+      "anio_dato": "2025"
+    },
+    "DEU": {
+      "inflacion": 2.172,
+      "crecimiento": 0.24,
+      "desempleo": 3.711,
+      "tasa_politica": 3.758,
+      "tasa_prestamo": null,
+      "fx_usd": 0.88496895841236,
+      "recaudo_pib": 10.891,
+      "pib_pc_usd": 60496.4,
+      "renta_empresas": 0.3,
+      "anio_dato": "2025"
+    },
+    "GBR": {
+      "inflacion": 3.883,
+      "crecimiento": 1.388,
+      "desempleo": 4.746,
+      "tasa_politica": 6.325,
+      "tasa_prestamo": null,
+      "fx_usd": 0.759473957338607,
+      "recaudo_pib": 26.889,
+      "pib_pc_usd": 57602.0,
+      "renta_empresas": 0.25,
+      "anio_dato": "2025"
+    },
+    "JPN": {
+      "inflacion": 3.173,
+      "crecimiento": 1.193,
+      "desempleo": 2.451,
+      "tasa_politica": 5.259,
+      "tasa_prestamo": null,
+      "fx_usd": 149.657926890951,
+      "recaudo_pib": 15.0,
+      "pib_pc_usd": 35951.0,
+      "renta_empresas": 0.3,
+      "anio_dato": "2025"
+    },
+    "MEX": {
+      "inflacion": 3.81,
+      "crecimiento": 0.562,
+      "desempleo": 2.673,
+      "tasa_politica": 6.214,
+      "tasa_prestamo": 8.786,
+      "fx_usd": 19.2375083333333,
+      "recaudo_pib": 14.824,
+      "pib_pc_usd": 13889.2,
+      "renta_empresas": 0.3,
+      "anio_dato": "2025"
+    },
+    "PER": {
+      "inflacion": 1.531,
+      "crecimiento": 3.431,
+      "desempleo": 5.117,
+      "tasa_politica": 2.797,
+      "tasa_prestamo": null,
+      "fx_usd": 3.56706380329909,
+      "recaudo_pib": 15.0,
+      "pib_pc_usd": 9684.4,
+      "renta_empresas": 0.295,
+      "anio_dato": "2025"
+    },
+    "USA": {
+      "inflacion": 2.95,
+      "crecimiento": 2.161,
+      "desempleo": 4.198,
+      "tasa_politica": 4.924,
+      "tasa_prestamo": null,
+      "fx_usd": 1.0,
+      "recaudo_pib": 10.769,
+      "pib_pc_usd": 90026.5,
+      "renta_empresas": 0.21,
+      "anio_dato": "2025"
+    }
+  },
+  "trm": {
+    "ultimo": 3166.91,
+    "fecha": "2026-10-30",
+    "promedio_2a": 3903.22,
+    "vol_diaria": 0.00782,
+    "observaciones": 730
+  },
+  "poblacion": {
+    "TUN": 167991,
+    "BOG": 7181469,
+    "MED": 2372330,
+    "CAL": 1822869,
+    "BAQ": 1120103,
+    "BUC": 528855,
+    "CTG": 887946,
+    "BOY": 1135698,
+    "ANT": 5974788,
+    "VAL": 3789874,
+    "CUN": 2792877,
+    "SAN": 2008841,
+    "MET": 919129,
+    "NAR": 1335521,
+    "ATL": 2342265,
+    "COL": 44164417
+  },
+  "salario_minimo_col": 1423500
+}

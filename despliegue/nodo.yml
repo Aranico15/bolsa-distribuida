@@ -1,0 +1,14 @@
+# CADA UNO DE LOS OTROS 4 PCs: un nodo que se conecta al NATS del PC principal.
+#   set NODO=tunja                        (tunja | capitales | departamentos | colombia)
+#   set NATS_URL=nats://IP_DEL_PRINCIPAL:4222   (IP de la LAN o de Tailscale, p. ej. 100.x.y.z)
+#   set NATS_TOKEN=el-mismo-token
+#   docker compose -f despliegue/nodo.yml up --build
+services:
+  nodo:
+    build: ..
+    environment:
+      NATS_URL: ${NATS_URL:?Define NATS_URL}
+      NATS_TOKEN: ${NATS_TOKEN:?Define NATS_TOKEN}
+    command: ["sh", "-c", "python -m sim.nodo --nodo ${NODO:?Define NODO} --reanudar --procesos 0"]
+    volumes: ["../estado:/app/estado"]
+    restart: unless-stopped

@@ -1,0 +1,31 @@
+# PC PRINCIPAL (el tuyo): NATS + reloj global + nodo internacional + dashboard.
+#   set NATS_TOKEN=un-token-secreto      (PowerShell: $env:NATS_TOKEN="un-token-secreto")
+#   docker compose -f despliegue/principal.yml up --build
+x-app: &app
+  build: ..
+  environment:
+    NATS_URL: nats://nats:4222
+    NATS_TOKEN: ${NATS_TOKEN:?Define NATS_TOKEN}
+  volumes: ["../runs:/app/runs", "../estado:/app/estado"]
+  depends_on: [nats]
+  restart: unless-stopped
+
+services:
+  nats:
+    image: nats:2.10-alpine
+    command: ["-c", "/etc/nats/nats.conf"]
+    environment:
+      NATS_TOKEN: ${NATS_TOKEN:?Define NATS_TOKEN}
+    volumes: ["./nats.conf:/etc/nats/nats.conf:ro"]
+    ports: ["4222:4222", "8222:8222"]
+    restart: unless-stopped
+  coordinador:
+    <<: *app
+    command: ["python", "-m", "sim.coordinador"]
+  dashboard:
+    <<: *app
+    command: ["python", "-m", "dashboard.servidor", "--puerto", "8000"]
+    ports: ["8000:8000"]
+  internacional:
+    <<: *app
+    command: ["python", "-m", "sim.nodo", "--nodo", "internacional", "--reanudar", "--procesos", "0"]

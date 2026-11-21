@@ -1,0 +1,23 @@
+Copyright (c) 2026 Nicolás Cruz, Camilo Barbosa, Julián Sandoval, Sergio Campos y Daniel Ajiaco.
+Todos los derechos reservados.
+
+Bolsa Distribuida - Proyecto Integrador, Facultad de Ingeniería de Datos e IA,
+Universidad Santo Tomás, Seccional Tunja.
+
+Este repositorio se publica únicamente para fines de evaluación académica. Se permite a los
+docentes y evaluadores de la Universidad Santo Tomás ver, descargar y ejecutar el código con el
+único propósito de revisar y calificar el proyecto.
+
+Salvo esa excepción, ninguna parte de este software, su documentación ni sus resultados puede
+copiarse, modificarse, redistribuirse, publicarse, sublicenciarse, venderse ni usarse en otros
+trabajos, académicos o comerciales, sin la autorización previa y por escrito de los autores.
+
+Que el repositorio sea visible públicamente no concede ninguna licencia de uso.
+
+EL SOFTWARE SE ENTREGA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O IMPLÍCITA. EN NINGÚN
+CASO LOS AUTORES SERÁN RESPONSABLES POR RECLAMOS, DAÑOS U OTRAS OBLIGACIONES DERIVADAS DEL USO
+DEL SOFTWARE.
+
+Componentes de terceros incluidos (conservan su propia licencia; ver los archivos LICENSE-* junto
+a cada uno): D3, TradingView Lightweight Charts, topojson-client, geo-colombia y world-atlas
+(Natural Earth).

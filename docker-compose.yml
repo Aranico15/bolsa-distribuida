@@ -1,0 +1,43 @@
+# Todo en un solo computador (demo / desarrollo):  docker compose up --build
+# Dashboard en http://localhost:8000
+x-app: &app
+  build: .
+  environment:
+    NATS_URL: nats://nats:4222
+    NATS_TOKEN: ${NATS_TOKEN:-cambia-este-token}
+  volumes:
+    - ./runs:/app/runs
+    - ./estado:/app/estado
+  depends_on: [nats]
+  restart: unless-stopped
+
+services:
+  nats:
+    image: nats:2.10-alpine
+    command: ["-c", "/etc/nats/nats.conf"]
+    environment:
+      NATS_TOKEN: ${NATS_TOKEN:-cambia-este-token}
+    volumes: ["./despliegue/nats.conf:/etc/nats/nats.conf:ro"]
+    ports: ["4222:4222", "8222:8222"]
+  coordinador:
+    <<: *app
+    command: ["python", "-m", "sim.coordinador"]
+  dashboard:
+    <<: *app
+    command: ["python", "-m", "dashboard.servidor", "--puerto", "8000"]
+    ports: ["8000:8000"]
+  internacional:
+    <<: *app
+    command: ["python", "-m", "sim.nodo", "--nodo", "internacional", "--reanudar"]
+  colombia:
+    <<: *app
+    command: ["python", "-m", "sim.nodo", "--nodo", "colombia", "--reanudar"]
+  capitales:
+    <<: *app
+    command: ["python", "-m", "sim.nodo", "--nodo", "capitales", "--reanudar"]
+  departamentos:
+    <<: *app
+    command: ["python", "-m", "sim.nodo", "--nodo", "departamentos", "--reanudar"]
+  tunja:
+    <<: *app
+    command: ["python", "-m", "sim.nodo", "--nodo", "tunja", "--reanudar"]

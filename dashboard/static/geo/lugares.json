@@ -1,0 +1,63 @@
+{
+ "ciudades": {
+  "TUN": {
+   "nombre": "Tunja",
+   "lat": 5.51847261503,
+   "lon": -73.3780185558,
+   "pob2018": 167991,
+   "divipola": "15001"
+  },
+  "BOG": {
+   "nombre": "Bogotá, D.C.",
+   "lat": 4.31610769809,
+   "lon": -74.1810727016,
+   "pob2018": 7181469,
+   "divipola": "11001"
+  },
+  "MED": {
+   "nombre": "Medellín",
+   "lat": 6.2575902592,
+   "lon": -75.6110310655,
+   "pob2018": 2372330,
+   "divipola": "05001"
+  },
+  "CAL": {
+   "nombre": "Cali",
+   "lat": 3.39904372291,
+   "lon": -76.5764925891,
+   "pob2018": 1822869,
+   "divipola": "76001"
+  },
+  "BAQ": {
+   "nombre": "Barranquilla",
+   "lat": 10.9815205105,
+   "lon": -74.8277154388,
+   "pob2018": 1120103,
+   "divipola": "08001"
+  },
+  "BUC": {
+   "nombre": "Bucaramanga",
+   "lat": 7.15583354374,
+   "lon": -73.1115699712,
+   "pob2018": 528855,
+   "divipola": "68001"
+  },
+  "CTG": {
+   "nombre": "Cartagena De Indias",
+   "lat": 10.4491887709,
+   "lon": -75.469902233,
+   "pob2018": 887946,
+   "divipola": "13001"
+  }
+ },
+ "departamentos": {
+  "15": "BOY",
+  "05": "ANT",
+  "76": "VAL",
+  "25": "CUN",
+  "68": "SAN",
+  "50": "MET",
+  "52": "NAR",
+  "08": "ATL"
+ }
+}

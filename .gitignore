@@ -1,0 +1,23 @@
+# Entornos y caché
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Resultados de ejecución (se regeneran)
+runs/
+estado/
+*.pkl
+*.log
+
+# Datos crudos: se descargan de las fuentes oficiales con scripts/descargar_datos.py
+data/raw/*
+!data/raw/.gitkeep
+
+# Documentos de trabajo que no forman parte del repositorio
+Informe_*.docx
+Informe_*.pdf
+crear_informe.py
+generar_pdf.py
+Resumen_y_prompt_*.md

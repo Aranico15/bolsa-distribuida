@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nodo · Bolsa Distribuida</title>
+<link rel="stylesheet" href="/static/estilo.css">
+<script src="/static/vendor/lightweight-charts.standalone.production.js"></script>
+<script src="/static/vendor/d3.min.js"></script>
+<script src="/static/vendor/topojson-client.min.js"></script>
+</head>
+<body>
+<header class="barra">
+  <div class="marca"><span class="logo">◆</span> BOLSA DISTRIBUIDA <small id="marca-nodo"></small></div>
+  <div class="reloj" id="reloj"></div>
+  <div class="controles"><a class="boton" href="/">← Panel general</a></div>
+</header>
+<div id="nav"></div>
+
+<section class="heroe" id="heroe">
+  <div class="heroe-texto">
+    <div class="sobretitulo" id="h-sobre"></div>
+    <h1 id="h-titulo"></h1>
+    <p id="h-desc"></p>
+    <div class="chips" id="h-chips"></div>
+  </div>
+  <div class="kpis heroe-kpis" id="kpis"></div>
+</section>
+
+<main class="rejilla">
+  <section class="panel ancho alto-mapa">
+    <div class="panel-cab"><b id="mapa-titulo">Mapa</b><span class="tenue" id="mapa-sub"></span></div>
+    <div id="mapa" class="lienzo-mapa"></div>
+  </section>
+  <aside class="panel">
+    <div class="panel-cab"><b id="regiones-titulo">Regiones</b><span class="tenue">clic para filtrar</span></div>
+    <div id="regiones" class="regiones"></div>
+  </aside>
+
+  <section class="panel grafico-principal">
+    <div class="panel-cab">
+      <div><b id="sel-ticker">—</b> <span id="sel-info" class="tenue"></span></div>
+      <div><span id="sel-precio" class="precio">—</span> <span id="sel-var" class="var"></span></div>
+    </div>
+    <div id="grafico-velas" class="grafico alto"></div>
+  </section>
+  <aside class="panel lista">
+    <div class="panel-cab"><b>Empresas del nodo</b><span class="tenue" id="filtro-region"></span></div>
+    <div class="tabla-scroll"><table id="tabla-activos"><thead><tr>
+      <th data-k="tk">Ticker</th><th data-k="sec">Sector</th><th data-k="p" class="num">Precio</th>
+      <th data-k="var" class="num">Día</th><th data-k="var_total" class="num">Total</th></tr></thead><tbody></tbody></table></div>
+  </aside>
+
+  <section class="panel">
+    <div class="panel-cab"><b>Índice por región</b><span class="tenue">base 1000</span></div>
+    <div id="grafico-regiones" class="grafico"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-cab"><b>Inflación y desempleo</b><span class="tenue">promedio del nodo (%)</span></div>
+    <div id="grafico-macro" class="grafico"></div>
+  </section>
+
+  <section class="panel ancho">
+    <div class="panel-cab"><b>Mapa de calor</b><span class="tenue">empresas agrupadas por región · color = variación del día</span></div>
+    <div id="treemap" class="treemap"></div>
+  </section>
+  <section class="panel" id="especial">
+    <div class="panel-cab"><b id="especial-titulo"></b><span class="tenue" id="especial-sub"></span></div>
+    <div id="especial-cuerpo"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-cab"><b>La red desde este nodo</b><span class="tenue">órdenes por tick</span></div>
+    <div id="red"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-cab"><b>Población de agentes</b></div>
+    <div id="agentes"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-cab"><b>Noticias del nodo</b></div>
+    <ul id="eventos" class="eventos"></ul>
+  </section>
+
+  <section class="panel ancho-total choques">
+    <div class="panel-cab"><b>Lanzar choque sobre este nodo</b></div>
+    <div id="choques"></div>
+  </section>
+</main>
+<footer>Gráficos: <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Lightweight Charts</a> y D3 ·
+  Mapas: DANE (Marco Geoestadístico Nacional) y Natural Earth · Datos: Banco Mundial, Banco de la República, DANE</footer>
+<script src="/static/comun.js"></script>
+<script src="/static/nodo.js"></script>
+</body>
+</html>

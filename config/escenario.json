@@ -1,0 +1,94 @@
+{
+  "simulacion": {
+    "segundos_por_tick": 0.5,
+    "timeout_ack_s": 3.0,
+    "ticks_para_caido": 3,
+    "fecha_inicio": "2026-11-03",
+    "semilla_aleatoria": 42,
+    "snapshot_cada": 50,
+    "nodos_colombia": ["tunja", "capitales", "departamentos", "colombia"]
+  },
+  "nodos": {
+    "tunja": {
+      "nombre": "Tunja", "pais": "COL", "moneda": "COP", "agentes": 220, "empresas_por_region": 12,
+      "regiones": [
+        {"codigo": "TUN", "nombre": "Tunja", "salario_mult": 0.95,
+         "sectores": ["COM", "EDU", "CON", "SAL", "TUR", "AGR", "TRA", "ALI"]}
+      ]
+    },
+    "capitales": {
+      "nombre": "Ciudades capitales", "pais": "COL", "moneda": "COP", "agentes": 300, "empresas_por_region": 5,
+      "regiones": [
+        {"codigo": "BOG", "nombre": "Bogotá", "salario_mult": 1.25, "sectores": ["FIN", "TEC", "COM", "CON", "SAL"]},
+        {"codigo": "MED", "nombre": "Medellín", "salario_mult": 1.1, "sectores": ["TEX", "TEC", "COM", "CON", "FIN"]},
+        {"codigo": "CAL", "nombre": "Cali", "salario_mult": 1.0, "sectores": ["ALI", "COM", "SAL", "CON", "TRA"]},
+        {"codigo": "BAQ", "nombre": "Barranquilla", "salario_mult": 0.95, "sectores": ["PUE", "COM", "CON", "ENE", "TRA"]},
+        {"codigo": "BUC", "nombre": "Bucaramanga", "salario_mult": 1.0, "sectores": ["COM", "SAL", "CON", "ALI", "TEC"]},
+        {"codigo": "CTG", "nombre": "Cartagena", "salario_mult": 0.95, "sectores": ["TUR", "PUE", "PET", "COM", "CON"]}
+      ]
+    },
+    "departamentos": {
+      "nombre": "Departamentos", "pais": "COL", "moneda": "COP", "agentes": 320, "empresas_por_region": 4,
+      "regiones": [
+        {"codigo": "BOY", "nombre": "Boyacá", "salario_mult": 0.85, "sectores": ["AGR", "MIN", "ALI", "TUR"]},
+        {"codigo": "ANT", "nombre": "Antioquia", "salario_mult": 1.0, "sectores": ["CAF", "MIN", "ENE", "AGR"]},
+        {"codigo": "VAL", "nombre": "Valle del Cauca", "salario_mult": 0.95, "sectores": ["AZU", "AGR", "ALI", "PUE"]},
+        {"codigo": "CUN", "nombre": "Cundinamarca", "salario_mult": 0.95, "sectores": ["FLO", "AGR", "ALI", "CON"]},
+        {"codigo": "SAN", "nombre": "Santander", "salario_mult": 0.95, "sectores": ["PET", "AGR", "ALI", "CON"]},
+        {"codigo": "MET", "nombre": "Meta", "salario_mult": 0.9, "sectores": ["PET", "AGR", "GAN", "ALI"]},
+        {"codigo": "NAR", "nombre": "Nariño", "salario_mult": 0.8, "sectores": ["AGR", "CAF", "GAN", "COM"]},
+        {"codigo": "ATL", "nombre": "Atlántico", "salario_mult": 0.9, "sectores": ["PUE", "ALI", "ENE", "COM"]}
+      ]
+    },
+    "colombia": {
+      "nombre": "Colombia (nacional)", "pais": "COL", "moneda": "COP", "agentes": 180, "empresas_por_region": 12,
+      "banco_central": true,
+      "regiones": [
+        {"codigo": "COL", "nombre": "Nacional", "salario_mult": 1.3,
+         "sectores": ["PET", "FIN", "ENE", "TEL", "CEM", "COM", "MIN", "CAF", "TRA", "ALI", "SAL", "TEC"]}
+      ]
+    },
+    "internacional": {
+      "nombre": "Mercado internacional", "pais": "INT", "moneda": "USD", "agentes": 280, "empresas_por_region": 4,
+      "mercado_mundial": true,
+      "regiones": [
+        {"codigo": "USA", "nombre": "Estados Unidos", "salario_mult": 1.0, "sectores": ["TEC", "FIN", "ENE", "SAL"]},
+        {"codigo": "CHN", "nombre": "China", "salario_mult": 1.0, "sectores": ["MAN", "TEC", "MIN", "FIN"]},
+        {"codigo": "BRA", "nombre": "Brasil", "salario_mult": 1.0, "sectores": ["AGR", "MIN", "PET", "FIN"]},
+        {"codigo": "MEX", "nombre": "México", "salario_mult": 1.0, "sectores": ["MAN", "COM", "TEL", "FIN"]},
+        {"codigo": "DEU", "nombre": "Alemania", "salario_mult": 1.0, "sectores": ["MAN", "AUT", "QUI", "FIN"]},
+        {"codigo": "JPN", "nombre": "Japón", "salario_mult": 1.0, "sectores": ["AUT", "TEC", "MAN", "FIN"]},
+        {"codigo": "GBR", "nombre": "Reino Unido", "salario_mult": 1.0, "sectores": ["FIN", "ENE", "SAL", "COM"]},
+        {"codigo": "CHL", "nombre": "Chile", "salario_mult": 1.0, "sectores": ["MIN", "AGR", "FIN", "COM"]},
+        {"codigo": "PER", "nombre": "Perú", "salario_mult": 1.0, "sectores": ["MIN", "AGR", "PES", "FIN"]}
+      ]
+    }
+  },
+  "reglas_base": {
+    "impuesto_renta_personas": 0.06,
+    "spread_prestamo": 0.06,
+    "apalancamiento_max": 0.9,
+    "max_extranjeros": 1.0,
+    "impuesto_transaccion_extranjeros": 0.004,
+    "arancel_a_colombia": 0.05,
+    "subsidio_desempleo": 0.3,
+    "propension_consumo": 0.88,
+    "prob_emprender": 0.0008
+  },
+  "reglas_paises": {
+    "COL": {"gmf_4x1000": 0.004, "nota": "renta empresas 35%, GMF 4x1000 sobre retiros"},
+    "USA": {"arancel_a_colombia": 0.10},
+    "CHN": {"max_extranjeros": 0.30, "arancel_a_colombia": 0.08, "nota": "límite de propiedad extranjera"},
+    "BRA": {"impuesto_transaccion_extranjeros": 0.0038, "nota": "IOF sobre operaciones de cambio"},
+    "MEX": {"arancel_a_colombia": 0.0, "nota": "Alianza del Pacífico"},
+    "CHL": {"arancel_a_colombia": 0.0, "nota": "Alianza del Pacífico"},
+    "PER": {"arancel_a_colombia": 0.0, "nota": "Alianza del Pacífico / CAN"},
+    "DEU": {"arancel_a_colombia": 0.0, "nota": "Acuerdo comercial UE-Colombia"},
+    "GBR": {"arancel_a_colombia": 0.0},
+    "JPN": {"arancel_a_colombia": 0.06}
+  },
+  "socios_comerciales": {"USA": 0.30, "CHN": 0.08, "BRA": 0.06, "MEX": 0.05, "DEU": 0.04,
+                          "JPN": 0.02, "GBR": 0.03, "CHL": 0.05, "PER": 0.06, "RESTO": 0.31},
+  "mundo": {"petroleo_inicial": 68.0, "petroleo_ancla": 70.0, "vol_petroleo": 0.02,
+            "escala_flujo_usd": 2000000.0}
+}

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolsa Distribuida</title>
+<link rel="stylesheet" href="/static/estilo.css">
+<script src="/static/vendor/lightweight-charts.standalone.production.js"></script>
+<script src="/static/vendor/d3.min.js"></script>
+<script src="/static/vendor/topojson-client.min.js"></script>
+</head>
+<body class="tema-general">
+<header class="barra">
+  <div class="marca"><span class="logo">◆</span> BOLSA DISTRIBUIDA <small>Tunja → Colombia → Mundo</small></div>
+  <div class="reloj" id="reloj"></div>
+  <div class="controles">
+    <button id="btn-pausa">Pausar</button>
+    <label>Velocidad <select id="velocidad">
+      <option value="1">1 s/tick</option><option value="0.5" selected>0.5 s/tick</option>
+      <option value="0.2">0.2 s/tick</option><option value="0">Máxima</option></select></label>
+  </div>
+</header>
+<div id="nav"></div>
+<div class="cinta"><div id="cinta-contenido"></div></div>
+
+<section class="kpis" id="kpis"></section>
+
+<main class="rejilla">
+  <section class="panel mapa-red">
+    <div class="panel-cab"><b>Mapa de la red</b>
+      <span class="tenue">color = variación del índice regional en 20 días · líneas = órdenes entre nodos por tick</span></div>
+    <div id="mapa-red" class="lienzo-mapa"></div>
+  </section>
+
+  <section class="panel grafico-principal">
+    <div class="panel-cab">
+      <div><b id="sel-ticker">—</b> <span id="sel-info" class="tenue"></span></div>
+      <div><span id="sel-precio" class="precio">—</span> <span id="sel-var" class="var"></span></div>
+    </div>
+    <div id="grafico-velas" class="grafico alto"></div>
+  </section>
+
+  <aside class="panel lista">
+    <div class="panel-cab"><b>Mercado</b><input id="buscar" placeholder="Buscar ticker, región o sector"></div>
+    <div class="pestanas" id="pestanas"></div>
+    <div class="tabla-scroll"><table id="tabla-activos"><thead><tr>
+      <th data-k="tk">Ticker</th><th data-k="p" class="num">Precio</th><th data-k="var" class="num">Día</th>
+      <th data-k="var_total" class="num">Total</th><th data-k="v" class="num">Vol</th></tr></thead><tbody></tbody></table></div>
+  </aside>
+
+  <section class="panel">
+    <div class="panel-cab"><b>Índices por nodo</b><span class="tenue">base 1000</span></div>
+    <div id="grafico-indices" class="grafico"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-cab"><b>Nodos de la red</b><span class="tenue">clic para abrir su vista</span></div>
+    <div id="nodos" class="nodos"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-cab"><b>TRM y petróleo</b><span class="tenue">COP/USD · USD/barril</span></div>
+    <div id="grafico-trm" class="grafico"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-cab"><b>Banco de la República</b><span class="tenue">tasa vs inflación (%)</span></div>
+    <div id="grafico-tasa" class="grafico"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-cab"><b>Noticias del mercado</b></div>
+    <ul id="eventos" class="eventos"></ul>
+  </section>
+
+  <section class="panel ancho">
+    <div class="panel-cab"><b>Mapa de calor del mercado</b><span class="tenue">tamaño = capitalización · color = variación del día</span></div>
+    <div id="treemap" class="treemap"></div>
+  </section>
+
+  <section class="panel choques">
+    <div class="panel-cab"><b>Lanzar choque económico</b></div>
+    <div id="choques"></div>
+  </section>
+</main>
+<footer>Gráficos: <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Lightweight Charts</a> y D3 ·
+  Mapas: DANE (Marco Geoestadístico Nacional) y Natural Earth · Datos: Banco Mundial, Banco de la República, DANE</footer>
+<script src="/static/comun.js"></script>
+<script src="/static/general.js"></script>
+</body>
+</html>

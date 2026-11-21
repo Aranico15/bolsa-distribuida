@@ -1,0 +1,23 @@
+{
+  "sistema": "Linux-6.18.44-fc-v726-x86_64-with-glibc2.39",
+  "python": "3.13.18",
+  "numpy": "2.5.5",
+  "procesador": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "nucleos_logicos": 4,
+  "procesos": [
+    1,
+    2,
+    4
+  ],
+  "modos": [
+    "procesos",
+    "hilos"
+  ],
+  "agentes": [
+    5000,
+    20000,
+    40000
+  ],
+  "repeticiones": 5,
+  "verificacion": "salida idéntica a la secuencial en todas las configuraciones"
+}
