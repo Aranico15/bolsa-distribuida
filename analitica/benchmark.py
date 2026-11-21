@@ -106,7 +106,10 @@ def graficar(filas, salida: Path, modos, tamanos):
             ax.plot(ps_todos, [ideal(p) for p in ps_todos], "k--", alpha=0.45, label="ideal")
         ax.set_xlabel("procesos / hilos (p)")
         ax.set_ylabel(etiqueta)
+        if max(ps_todos) > 8:
+            ax.set_xscale("log", base=2)
         ax.set_xticks(ps_todos)
+        ax.set_xticklabels([str(p) for p in ps_todos])
         if metrica == "segundos":
             ax.set_yscale("log")
         if metrica == "eficiencia":

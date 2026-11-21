@@ -59,7 +59,7 @@ Las semillas aleatorias están fijadas en `config/escenario.json` (`semilla_alea
 
 `sim/kernel.py` contiene el núcleo de decisión de inversión: cada inversionista evalúa 8 activos con Monte Carlo (64 escenarios × 20 días) y calcula retorno esperado, CVaR 5 % y caída máxima. Es el cálculo más costoso de cada tick.
 
-- **Descomposición de dominio:** los agentes se parten en sub-bloques de 256; cada sub-bloque tiene su propio generador aleatorio derivado de `(semilla, número de sub-bloque)`. Así el resultado no depende del número de trabajadores.
+- **Descomposición de dominio:** los agentes se parten en sub-bloques de 64 (los arreglos de trabajo de cada sub-bloque caben en la caché del procesador); cada sub-bloque tiene su propio generador aleatorio derivado de `(semilla, número de sub-bloque)`. Así el resultado no depende del número de trabajadores.
 - **Balance de carga:** los sub-bloques se reparten en bloques contiguos casi iguales entre los trabajadores (`repartir`).
 - **Dos modelos:** `Paralelo(p, "procesos")` usa `multiprocessing` (`ProcessPoolExecutor`) y `Paralelo(p, "hilos")` usa `threading` (`ThreadPoolExecutor`). Con `p = 1` corre la versión secuencial.
 - En la simulación se activa con `--procesos N` (`python ejecutar_local.py --procesos 4` o `python -m sim.nodo --nodo tunja --procesos 0` para todos los núcleos).
@@ -72,24 +72,39 @@ benchmark.bat                                 # lo mismo en Windows
 
 Métricas: speedup `S(p) = T(1)/T(p)`, eficiencia `E(p) = S(p)/p`, fracción serial de Karp-Flatt y ajuste de la ley de Amdahl. Mediana de 5 repeticiones.
 
-Resultados en un equipo de 4 núcleos lógicos (Intel Xeon 2,1 GHz, Linux, Python 3.13), escalamiento fuerte:
+Resultados (escalamiento fuerte, mediana de 5 repeticiones; la salida paralela fue idéntica a la secuencial en todos los casos):
+
+**Equipo A:** portátil AMD Ryzen 9 9955HX, 16 núcleos físicos / 32 lógicos, 32 GB, Windows 11, Python 3.10. Se midió con otra aplicación abierta que ocupaba cerca de 2,6 núcleos. Datos en [docs/benchmark_pc/](docs/benchmark_pc/).
 
 | Agentes | p | Procesos: T (s) | S | E | Hilos: T (s) | S | E |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 5.000 | 1 | 1,240 | 1,00 | 1,00 | 1,240 | 1,00 | 1,00 |
-| 5.000 | 2 | 0,657 | 1,89 | 0,94 | 0,600 | 2,07 | 1,03 |
-| 5.000 | 4 | 0,352 | 3,52 | 0,88 | 0,335 | 3,70 | 0,93 |
-| 20.000 | 1 | 4,731 | 1,00 | 1,00 | 4,731 | 1,00 | 1,00 |
-| 20.000 | 2 | 2,534 | 1,87 | 0,93 | 2,634 | 1,80 | 0,90 |
-| 20.000 | 4 | 1,358 | 3,48 | 0,87 | 1,513 | 3,13 | 0,78 |
-| 40.000 | 1 | 10,249 | 1,00 | 1,00 | 10,249 | 1,00 | 1,00 |
-| 40.000 | 2 | 5,334 | 1,92 | 0,96 | 5,350 | 1,92 | 0,96 |
-| 40.000 | 4 | 2,735 | 3,75 | 0,94 | 2,763 | 3,71 | 0,93 |
+| 5.000 | 1 | 0,844 | 1,00 | 1,00 | 0,844 | 1,00 | 1,00 |
+| 5.000 | 2 | 0,494 | 1,71 | 0,85 | 0,414 | 2,04 | 1,02 |
+| 5.000 | 4 | 0,275 | 3,07 | 0,77 | 0,265 | 3,18 | 0,80 |
+| 5.000 | 8 | 0,173 | 4,88 | 0,61 | 0,193 | 4,38 | 0,55 |
+| 5.000 | 16 | 0,138 | 6,10 | 0,38 | 0,162 | 5,20 | 0,33 |
+| 5.000 | 32 | 0,139 | 6,06 | 0,19 | 0,161 | 5,26 | 0,16 |
+| 40.000 | 1 | 5,773 | 1,00 | 1,00 | 5,773 | 1,00 | 1,00 |
+| 40.000 | 2 | 3,155 | 1,83 | 0,91 | 3,233 | 1,79 | 0,89 |
+| 40.000 | 4 | 1,832 | 3,15 | 0,79 | 2,000 | 2,89 | 0,72 |
+| 40.000 | 8 | 1,218 | 4,74 | 0,59 | 1,452 | 3,97 | 0,50 |
+| 40.000 | 16 | 0,989 | 5,84 | 0,36 | 1,266 | 4,56 | 0,28 |
+| 40.000 | 32 | 1,022 | 5,65 | 0,18 | 1,189 | 4,86 | 0,15 |
 
-![speedup](docs/benchmark/speedup.png)
+![speedup equipo A](docs/benchmark_pc/speedup.png)
 
-Con 40.000 agentes y 4 procesos el speedup es **3,75×** (eficiencia 0,94); la ley de Amdahl ajustada da una fracción serial de 2,3 %. Los datos completos están en [docs/benchmark/](docs/benchmark/). Los resultados dependen del equipo: para medir en otro computador basta con `benchmark.bat` o `python -m analitica.benchmark`.
+**Equipo B:** máquina virtual de 4 núcleos (Intel Xeon 2,1 GHz), Linux, Python 3.13, sin otra carga. Datos en [docs/benchmark/](docs/benchmark/).
 
+| Agentes | p | Procesos: T (s) | S | E | Hilos: T (s) | S | E |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 5.000 | 1 | 1,166 | 1,00 | 1,00 | 1,166 | 1,00 | 1,00 |
+| 5.000 | 2 | 0,623 | 1,87 | 0,94 | 0,609 | 1,92 | 0,96 |
+| 5.000 | 4 | 0,326 | 3,58 | 0,89 | 0,354 | 3,30 | 0,82 |
+| 40.000 | 1 | 9,274 | 1,00 | 1,00 | 9,274 | 1,00 | 1,00 |
+| 40.000 | 2 | 4,872 | 1,90 | 0,95 | 4,848 | 1,91 | 0,96 |
+| 40.000 | 4 | 2,469 | 3,76 | 0,94 | 2,471 | 3,75 | 0,94 |
+
+Con 4 trabajadores la eficiencia va de 0,72 a 0,94 según el equipo y la carga. En el equipo A el speedup llega a un máximo de 5,8–6,1 con 16 procesos: el límite está en el ancho de banda de memoria, la frecuencia del procesador con todos los núcleos activos y la carga externa, no en una parte serial del código (la fracción de Karp-Flatt crece con p). El análisis completo está en el documento IEEE ([docs/articulo/](docs/articulo/)). Para medir en otro computador basta con `benchmark.bat` o `python -m analitica.benchmark`.
 
 ## Cómo cubre las materias
 
@@ -168,7 +183,8 @@ sim/nodo.py              servicio de un nodo (red, snapshots)
 sim/coordinador.py       reloj global, barrera, detección de caídas, registro CSV
 dashboard/               servidor FastAPI + WebSocket y página web
 analitica/               benchmark.py (speedup/eficiencia), reporte.py y mineria.py
-docs/benchmark/          resultados del benchmark usados en el documento IEEE
+docs/benchmark_pc/       benchmark en el portátil de 16 núcleos (equipo A)
+docs/benchmark/          benchmark en la máquina de 4 núcleos (equipo B)
 docs/articulo/           documento del avance en formato IEEE (HTML fuente y PDF)
 despliegue/              Docker Compose y configuración de NATS
 ```

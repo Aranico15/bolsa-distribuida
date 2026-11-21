@@ -1,0 +1,15 @@
+{
+  "sistema": "Windows 11 Home (10.0.28000), 64 bits",
+  "python": "3.10.11",
+  "numpy": "2.2.6",
+  "procesador": "AMD Ryzen 9 9955HX (16 núcleos físicos, 32 lógicos con SMT)",
+  "ram": "32 GB",
+  "nucleos_logicos": 32,
+  "procesos": [1, 2, 4, 8, 16, 32],
+  "modos": ["procesos", "hilos"],
+  "agentes": [5000, 20000, 40000],
+  "repeticiones": 5,
+  "subbloque": 64,
+  "verificacion": "salida idéntica a la secuencial en todas las configuraciones",
+  "nota": "Medido con otra aplicación abierta (un videojuego) que consumía cerca de 2,6 núcleos de forma continua."
+}

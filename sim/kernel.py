@@ -21,7 +21,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 import numpy as np
 
-SUBBLOQUE = 256  # agentes por sub-bloque para acotar memoria (k * escenarios * horizonte por agente)
+SUBBLOQUE = 64  # agentes por sub-bloque: pequeño para que los arreglos de trabajo quepan en caché
 
 
 def decidir(args):

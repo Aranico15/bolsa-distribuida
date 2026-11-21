@@ -51,13 +51,13 @@
   <h1 class="titulo">Bolsa Distribuida: simulación paralela y distribuida de un mercado bursátil multiagente con datos oficiales de Colombia</h1>
   <div class="autores">Nicolás Cruz, Camilo Barbosa, Julián Sandoval, Sergio Campos y Daniel Ajiaco</div>
   <div class="afiliacion">Facultad de Ingeniería de Datos e Inteligencia Artificial, Universidad Santo Tomás, Seccional Tunja, Colombia<br>
-    Proyecto Integrador, cuarto semestre &middot; Docente: <!--DOCENTE-->________________ &middot; Noviembre de 2026<br>
+    Proyecto Integrador, cuarto semestre &middot; Docente: Ivan Mariño &middot; Noviembre de 2026<br>
     Repositorio: https://github.com/Aranico15/bolsa-distribuida</div>
 </div>
 
 <div class="cuerpo">
 
-<p class="resumen"><i>Resumen</i>&mdash;Este avance presenta Bolsa Distribuida, una simulación de un mercado bursátil con 1.300 agentes (hogares, empresarios, inversionistas, bancos y formadores de liquidez) calibrada con datos oficiales y públicos del Banco Mundial, el Banco de la República y el DANE. La economía se reparte en cinco nodos (Tunja, ciudades capitales, departamentos, nivel nacional y mercado internacional) que pueden correr en computadores distintos y se comunican mediante mensajería publicar/suscribir sobre NATS, con un reloj global y una barrera de sincronización. Dentro de cada nodo, la decisión de inversión, que evalúa riesgo por Monte Carlo, se paraleliza en Python con <i>multiprocessing</i> y con <i>threading</i> mediante descomposición de dominio con generadores aleatorios por bloque, de modo que el resultado es idéntico con cualquier número de trabajadores. En un equipo de 4 núcleos, con 40.000 agentes se obtiene un speedup de 3,75 y una eficiencia de 0,94; la ley de Amdahl ajustada indica una fracción serial cercana al 2,3&nbsp;%. El proyecto integra computación paralela y distribuida, redes, minería de datos y analítica, y se alinea con los ODS 8 y 9.</p>
+<p class="resumen"><i>Resumen</i>&mdash;Este avance presenta Bolsa Distribuida, una simulación de un mercado bursátil con 1.300 agentes (hogares, empresarios, inversionistas, bancos y formadores de liquidez) calibrada con datos oficiales y públicos del Banco Mundial, el Banco de la República y el DANE. La economía se reparte en cinco nodos (Tunja, ciudades capitales, departamentos, nivel nacional y mercado internacional) que pueden correr en computadores distintos y se comunican mediante mensajería publicar/suscribir sobre NATS, con un reloj global y una barrera de sincronización. Dentro de cada nodo, la decisión de inversión, que evalúa riesgo por Monte Carlo, se paraleliza en Python con <i>multiprocessing</i> y con <i>threading</i> mediante descomposición de dominio con generadores aleatorios por bloque, de modo que el resultado es idéntico con cualquier número de trabajadores. En un equipo de 4 núcleos sin otra carga, con 40.000 agentes y 4 procesos el speedup es de 3,76 (eficiencia 0,94); en un portátil de 16 núcleos alcanza un máximo de 6,1, limitado por la memoria, la frecuencia y la carga del equipo. El proyecto integra computación paralela y distribuida, redes, minería de datos y analítica, y se alinea con los ODS 8, 9 y 10.</p>
 
 <p class="terminos"><i>Términos índice</i>&mdash;computación paralela, sistemas distribuidos, simulación basada en agentes, speedup, multiprocessing, NATS, minería de datos, ODS.</p>
 
@@ -121,7 +121,7 @@
 <p class="sin">donde &lambda; es la aversión al riesgo del agente. Compra el candidato de mayor utilidad si supera un umbral, o vende el de menor utilidad entre los que tiene. Son <i>k&middot;S&middot;H</i>&nbsp;=&nbsp;10.240 números aleatorios por agente y tick; con 40.000 agentes, unos 410 millones. El cálculo está vectorizado con NumPy [12] y la decisión de un agente no depende de la de los demás en el mismo tick, así que el problema es paralelizable por datos.</p>
 <h3>B. Diseño de la paralelización</h3>
 <ul>
-  <li><b>Descomposición de dominio:</b> los agentes se agrupan en sub-bloques de 256. Cada sub-bloque crea su propio generador aleatorio a partir de la pareja (semilla del tick, número de sub-bloque). Por eso el resultado no depende de cuántos trabajadores participen ni del orden en que terminen.</li>
+  <li><b>Descomposición de dominio:</b> los agentes se agrupan en sub-bloques de 64, tamaño elegido para que los arreglos de trabajo de cada sub-bloque (unos pocos megabytes, frente a decenas de megabytes con 256) quepan en la caché del procesador. Cada sub-bloque crea su propio generador aleatorio a partir de la pareja (semilla del tick, número de sub-bloque). Por eso el resultado no depende de cuántos trabajadores participen ni del orden en que terminen.</li>
   <li><b>Balance de carga:</b> los sub-bloques se reparten en bloques contiguos de tamaño casi igual, uno por trabajador; el costo por agente es homogéneo.</li>
   <li><b>Dos modelos de ejecución:</b> <code>ProcessPoolExecutor</code> (<i>multiprocessing</i>) crea procesos con su propio intérprete y GIL; <code>ThreadPoolExecutor</code> (<i>threading</i>) usa hilos que comparten memoria [7]. Los hilos solo escalan en la parte del cálculo en la que NumPy libera el GIL.</li>
   <li><b>Integración:</b> el nodo se lanza con <code>--procesos N</code> (0 = todos los núcleos) y el pool se crea una sola vez y se reutiliza en todos los ticks.</li>
@@ -129,7 +129,7 @@
 <div class="algo">
   <b class="t">Algoritmo 1. Decisión paralela (sim/kernel.py)</b>
   <div><b>Entrada:</b> agentes 0..n&minus;1, semilla <i>s</i>, trabajadores <i>p</i></div>
-  <div>1: B &larr; &lceil;n / 256&rceil; sub-bloques; repartir B en <i>p</i> grupos contiguos</div>
+  <div>1: B &larr; &lceil;n / 64&rceil; sub-bloques; repartir B en <i>p</i> grupos contiguos</div>
   <div>2: <b>para cada</b> grupo <i>g</i> <b>en paralelo</b> (proceso o hilo):</div>
   <div class="s1">3: <b>para cada</b> sub-bloque <i>b</i> de <i>g</i>:</div>
   <div class="s2">4: rng &larr; generador(<i>s</i>, <i>b</i>)</div>
@@ -138,44 +138,66 @@
   <div>7: unir los resultados en orden de agente y devolverlos</div>
 </div>
 <h3>C. Metodología de medición</h3>
-<p>Se mide escalamiento fuerte (tamaño fijo) con 5.000, 20.000 y 40.000 agentes y 200 activos, generados con semilla fija. Para cada número de trabajadores <i>p</i>&nbsp;&isin;&nbsp;{1,&nbsp;2,&nbsp;4,&nbsp;N} se toma la mediana de cinco repeticiones después de calentar el pool. <i>T</i>(1) es la versión secuencial (el mismo código sin pool). Antes de medir, el programa verifica que la salida con <i>p</i> trabajadores sea idéntica, elemento por elemento, a la secuencial. Se calculan</p>
+<p>Se mide escalamiento fuerte (tamaño fijo) con 5.000, 20.000 y 40.000 agentes y 200 activos, generados con semilla fija. Para cada número de trabajadores <i>p</i> &isin; {1, 2, 4, 8, &hellip;, N} se toma la mediana de cinco repeticiones después de calentar el pool. <i>T</i>(1) es la versión secuencial (el mismo código sin pool). Antes de medir, el programa verifica que la salida con <i>p</i> trabajadores sea idéntica, elemento por elemento, a la secuencial. Se calculan</p>
 <p class="eq">S(p) = T(1) / T(p), &nbsp;&nbsp; E(p) = S(p) / p,</p>
-<p class="sin">la fracción serial experimental de Karp-Flatt <i>e</i>&nbsp;=&nbsp;(1/S&nbsp;&minus;&nbsp;1/p)/(1&nbsp;&minus;&nbsp;1/p) [4] y la fracción serial <i>f</i> que mejor ajusta la ley de Amdahl S(p)&nbsp;=&nbsp;1/(f&nbsp;+&nbsp;(1&minus;f)/p) [3]. Estas mediciones se tomaron en un equipo Linux con 4 núcleos lógicos (Intel Xeon a 2,1&nbsp;GHz), Python 3.13 y NumPy 2.5; en este equipo N&nbsp;=&nbsp;4. Todo se ejecuta con <code>python -m analitica.benchmark</code>.</p>
+<p class="sin">la fracción serial experimental de Karp-Flatt <i>e</i>&nbsp;=&nbsp;(1/S&nbsp;&minus;&nbsp;1/p)/(1&nbsp;&minus;&nbsp;1/p) [4] y la fracción serial <i>f</i> que mejor ajusta la ley de Amdahl S(p)&nbsp;=&nbsp;1/(f&nbsp;+&nbsp;(1&minus;f)/p) [3]. Todo se ejecuta con <code>python -m analitica.benchmark</code> en dos equipos:</p>
+<ul>
+  <li><b>Equipo A</b> (portátil de un integrante): AMD Ryzen 9 9955HX, 16 núcleos físicos y 32 lógicos, 32&nbsp;GB de RAM, Windows 11, Python 3.10 y NumPy 2.2; N&nbsp;=&nbsp;32. Durante la medición había otra aplicación abierta (un videojuego) que ocupaba de forma continua unos 2,6 núcleos; no se cerró, y eso reduce los resultados con muchos trabajadores.</li>
+  <li><b>Equipo B</b> (máquina virtual en la nube, sin otra carga): 4 núcleos lógicos Intel Xeon a 2,1&nbsp;GHz, Linux, Python 3.13 y NumPy 2.5; N&nbsp;=&nbsp;4.</li>
+</ul>
 <h3>D. Resultados iniciales</h3>
-<p>La Tabla II y las Figs. 2 y 3 muestran los resultados. En las tres cargas y con ambos modelos, la salida paralela fue idéntica a la secuencial.</p>
+<p>Las Tablas II y III y las Figs. 2 y 3 muestran los resultados. En los dos equipos, las tres cargas y ambos modelos, la salida paralela fue idéntica a la secuencial.</p>
 <div class="tabla">
-<div class="rotulo">Tabla II<br>Tiempo, speedup y eficiencia (mediana de 5 repeticiones)</div>
+<div class="rotulo">Tabla II<br>Equipo A (16 núcleos): tiempo, speedup y eficiencia</div>
 <table>
   <tr><th rowspan="2">Agentes</th><th rowspan="2">p</th><th colspan="3">multiprocessing</th><th colspan="3">threading</th></tr>
   <tr><th>T (s)</th><th>S</th><th>E</th><th>T (s)</th><th>S</th><th>E</th></tr>
-  <tr><td>5.000</td><td>1</td><td>1,240</td><td>1,00</td><td>1,00</td><td>1,240</td><td>1,00</td><td>1,00</td></tr>
-  <tr><td></td><td>2</td><td>0,657</td><td>1,89</td><td>0,94</td><td>0,600</td><td>2,07</td><td>1,03</td></tr>
-  <tr><td></td><td>4</td><td>0,352</td><td>3,52</td><td>0,88</td><td>0,335</td><td>3,70</td><td>0,93</td></tr>
-  <tr><td>20.000</td><td>1</td><td>4,731</td><td>1,00</td><td>1,00</td><td>4,731</td><td>1,00</td><td>1,00</td></tr>
-  <tr><td></td><td>2</td><td>2,534</td><td>1,87</td><td>0,93</td><td>2,634</td><td>1,80</td><td>0,90</td></tr>
-  <tr><td></td><td>4</td><td>1,358</td><td>3,48</td><td>0,87</td><td>1,513</td><td>3,13</td><td>0,78</td></tr>
-  <tr><td>40.000</td><td>1</td><td>10,249</td><td>1,00</td><td>1,00</td><td>10,249</td><td>1,00</td><td>1,00</td></tr>
-  <tr><td></td><td>2</td><td>5,334</td><td>1,92</td><td>0,96</td><td>5,350</td><td>1,92</td><td>0,96</td></tr>
-  <tr><td></td><td>4</td><td>2,735</td><td>3,75</td><td>0,94</td><td>2,763</td><td>3,71</td><td>0,93</td></tr>
+  <tr><td>5.000</td><td>1</td><td>0,844</td><td>1,00</td><td>1,00</td><td>0,844</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>0,494</td><td>1,71</td><td>0,85</td><td>0,414</td><td>2,04</td><td>1,02</td></tr>
+  <tr><td></td><td>4</td><td>0,275</td><td>3,07</td><td>0,77</td><td>0,265</td><td>3,18</td><td>0,80</td></tr>
+  <tr><td></td><td>8</td><td>0,173</td><td>4,88</td><td>0,61</td><td>0,193</td><td>4,38</td><td>0,55</td></tr>
+  <tr><td></td><td>16</td><td>0,138</td><td>6,10</td><td>0,38</td><td>0,162</td><td>5,20</td><td>0,33</td></tr>
+  <tr><td></td><td>32</td><td>0,139</td><td>6,06</td><td>0,19</td><td>0,161</td><td>5,26</td><td>0,16</td></tr>
+  <tr><td>40.000</td><td>1</td><td>5,773</td><td>1,00</td><td>1,00</td><td>5,773</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>3,155</td><td>1,83</td><td>0,91</td><td>3,233</td><td>1,79</td><td>0,89</td></tr>
+  <tr><td></td><td>4</td><td>1,832</td><td>3,15</td><td>0,79</td><td>2,000</td><td>2,89</td><td>0,72</td></tr>
+  <tr><td></td><td>8</td><td>1,218</td><td>4,74</td><td>0,59</td><td>1,452</td><td>3,97</td><td>0,50</td></tr>
+  <tr><td></td><td>16</td><td>0,989</td><td>5,84</td><td>0,36</td><td>1,266</td><td>4,56</td><td>0,28</td></tr>
+  <tr><td></td><td>32</td><td>1,022</td><td>5,65</td><td>0,18</td><td>1,189</td><td>4,86</td><td>0,15</td></tr>
+</table>
+</div>
+<div class="tabla">
+<div class="rotulo">Tabla III<br>Equipo B (4 núcleos): tiempo, speedup y eficiencia</div>
+<table>
+  <tr><th rowspan="2">Agentes</th><th rowspan="2">p</th><th colspan="3">multiprocessing</th><th colspan="3">threading</th></tr>
+  <tr><th>T (s)</th><th>S</th><th>E</th><th>T (s)</th><th>S</th><th>E</th></tr>
+  <tr><td>5.000</td><td>1</td><td>1,166</td><td>1,00</td><td>1,00</td><td>1,166</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>0,623</td><td>1,87</td><td>0,94</td><td>0,609</td><td>1,92</td><td>0,96</td></tr>
+  <tr><td></td><td>4</td><td>0,326</td><td>3,58</td><td>0,89</td><td>0,354</td><td>3,30</td><td>0,82</td></tr>
+  <tr><td>40.000</td><td>1</td><td>9,274</td><td>1,00</td><td>1,00</td><td>9,274</td><td>1,00</td><td>1,00</td></tr>
+  <tr><td></td><td>2</td><td>4,872</td><td>1,90</td><td>0,95</td><td>4,848</td><td>1,91</td><td>0,96</td></tr>
+  <tr><td></td><td>4</td><td>2,469</td><td>3,76</td><td>0,94</td><td>2,471</td><td>3,75</td><td>0,94</td></tr>
 </table>
 </div>
 <figure>
-  <img src="../benchmark/speedup.png" alt="Speedup">
-  <figcaption>Fig. 2. Speedup frente al número de procesos o hilos. Línea punteada negra: speedup ideal S(p)&nbsp;=&nbsp;p.</figcaption>
+  <img src="../benchmark_pc/speedup.png" alt="Speedup">
+  <figcaption>Fig. 2. Speedup en el equipo A frente al número de procesos o hilos (eje en escala logarítmica de base 2). Línea punteada negra: speedup ideal S(p)&nbsp;=&nbsp;p.</figcaption>
 </figure>
 <figure>
-  <img src="../benchmark/eficiencia.png" alt="Eficiencia">
-  <figcaption>Fig. 3. Eficiencia E(p)&nbsp;=&nbsp;S(p)/p para las tres cargas y los dos modelos.</figcaption>
+  <img src="../benchmark_pc/eficiencia.png" alt="Eficiencia">
+  <figcaption>Fig. 3. Eficiencia E(p)&nbsp;=&nbsp;S(p)/p en el equipo A para las tres cargas y los dos modelos.</figcaption>
 </figure>
 <h3>E. Discusión</h3>
-<p>Con <i>multiprocessing</i>, la eficiencia con 4 procesos sube de 0,87&ndash;0,88 en las cargas pequeña y mediana a 0,94 con 40.000 agentes: al crecer el problema, el costo fijo de crear las tareas y de copiar (serializar) los arreglos de entrada y salida entre procesos pesa menos frente al cómputo. Para esa carga, la ley de Amdahl ajustada da <i>f</i>&nbsp;&asymp;&nbsp;0,023 (Karp-Flatt con <i>p</i>&nbsp;=&nbsp;4: 0,022), lo que sugiere un límite teórico de unas 40 veces si solo influyera la parte serial; en la práctica, el ancho de banda de memoria y el costo de comunicación aparecerán antes.</p>
-<p>El resultado de <i>threading</i> es interesante: aunque Python tiene GIL, los hilos alcanzan un speedup de 3,70 con 5.000 agentes, porque la mayor parte del tiempo se gasta dentro de NumPy (generación de normales, sumas acumuladas, ordenamiento), que libera el GIL. Con 20.000 agentes, en cambio, los hilos rinden menos (eficiencia 0,78) que los procesos, lo que atribuimos a que comparten la caché y el ancho de banda de memoria y a la parte de Python puro que sí retiene el GIL. La eficiencia de 1,03 con 2 hilos y 5.000 agentes está dentro de la variación de la medición (la desviación estándar es de 0,01 a 0,05&nbsp;s). Por su aislamiento y su escalamiento más estable, el simulador usa procesos por defecto.</p>
-<p>Limitaciones de este reporte inicial: se midió en un solo equipo de 4 núcleos, con datos sintéticos de la misma forma que los del simulador. Para la entrega final se repetirán las mediciones en los computadores del equipo, con más núcleos, y se medirá el escalamiento débil, que según la ley de Gustafson [5] es el más relevante cuando el número de agentes crece con los recursos, y el rendimiento distribuido en los cinco computadores (LAN frente a VPN).</p>
+<p><i>Hasta 4 trabajadores</i> el módulo escala bien en ambos equipos. En el equipo B, sin otra carga, la eficiencia con 4 procesos va de 0,89 a 0,94, y para 40.000 agentes la ley de Amdahl ajustada da <i>f</i>&nbsp;&asymp;&nbsp;0,022: la parte serial del algoritmo es pequeña. En el equipo A, con 4 procesos se obtiene un speedup de 3,1 (eficiencia cercana a 0,79).</p>
+<p><i>Con más trabajadores</i>, en el equipo A el speedup crece más despacio: llega a 4,7&ndash;4,9 con 8 procesos y a un máximo de 5,8&ndash;6,1 con 16, y con 32 ya no mejora. Que la fracción de Karp-Flatt aumente con <i>p</i> (de 0,09 a 0,15 con 40.000 agentes) indica que el límite no es una parte serial fija del código, sino un costo que crece con el número de trabajadores [4]. Las causas más probables son: (i) la carga externa, que dejaba libres unos 13 de los 16 núcleos; (ii) la frecuencia del procesador de un portátil, que es mucho mayor con un solo núcleo activo que con todos, lo que favorece a <i>T</i>(1); (iii) el ancho de banda de memoria compartido, porque generar y recorrer cientos de millones de números aleatorios es una operación limitada por memoria, y (iv) que los 32 hilos lógicos (SMT) comparten las unidades de cálculo de 16 núcleos físicos. Con estos resultados, la configuración recomendada para el simulador en este equipo es de 8 a 16 procesos.</p>
+<p><i>Optimización de caché.</i> La primera medición en el equipo A usaba sub-bloques de 256 agentes, cuyos arreglos de trabajo ocupan decenas de megabytes. Al reducirlos a 64, el speedup máximo con procesos pasó de 4,8 a 6,1 (5.000 agentes) y de 5,4 a 5,8 (40.000 agentes), la variación entre repeticiones disminuyó, y el tiempo con 16 procesos y 40.000 agentes bajó de 1,11 a 0,99&nbsp;s.</p>
+<p><i>Procesos frente a hilos.</i> Aunque Python tiene GIL, los hilos también escalan, porque la mayor parte del tiempo se pasa dentro de NumPy (generación de normales, sumas acumuladas, ordenamiento), que libera el GIL. Con pocos trabajadores, ambos modelos rinden parecido (con 2 hilos la eficiencia supera ligeramente 1, dentro de la variación de la medición); con 16 o más, los procesos superan a los hilos (5,8 frente a 4,6 con 40.000 agentes), porque en el código Python puro que queda los hilos sí compiten por el GIL. Por eso el simulador usa procesos por defecto.</p>
+<p><i>Limitaciones.</i> Los datos del benchmark son sintéticos, con la misma forma que los del simulador, y el equipo A tenía carga externa. Para la entrega final se repetirá la medición con el equipo en reposo, se medirá el escalamiento débil, que según la ley de Gustafson [5] es el más relevante cuando el número de agentes crece con los recursos, y se medirá el rendimiento distribuido en los cinco computadores (LAN frente a VPN).</p>
 
 <h2>V. Integración con otras asignaturas</h2>
-<p>La Tabla III resume cómo el proyecto integra las asignaturas de cuarto semestre.</p>
+<p>La Tabla IV resume cómo el proyecto integra las asignaturas de cuarto semestre.</p>
 <div class="tabla">
-<div class="rotulo">Tabla III<br>Integración con las asignaturas de cuarto semestre</div>
+<div class="rotulo">Tabla IV<br>Integración con las asignaturas de cuarto semestre</div>
 <table>
   <tr><th class="izq">Asignatura</th><th class="izq">Componente del proyecto</th></tr>
   <tr><td class="izq">Computación paralela y distribuida</td><td class="izq">Núcleo paralelo con procesos e hilos; cinco nodos distribuidos; reloj global con barrera; tolerancia a fallos con detección de nodos caídos y <i>snapshots</i>.</td></tr>
@@ -190,7 +212,7 @@
 <p>El código está en el repositorio indicado en el encabezado. Con Python 3.10 o superior, <code>reproducir.bat</code> (Windows) o <code>reproducir.sh</code> (Linux/macOS) instala las dependencias, descarga los datos oficiales y regenera la semilla (o usa la incluida si no hay internet), ejecuta el benchmark, corre 250 ticks de la simulación distribuida completa y genera el reporte y la minería de datos. Las semillas aleatorias son fijas y el núcleo paralelo es determinista respecto al número de trabajadores. Los estados intermedios, las corridas y los datos crudos no se versionan porque se regeneran.</p>
 
 <h2>VII. Conclusiones y trabajo futuro</h2>
-<p>El avance cumple los tres elementos del módulo paralelo: una implementación en Python con <i>multiprocessing</i> y <i>threading</i>, una verificación de que el paralelismo no cambia el resultado y un reporte inicial de speedup y eficiencia, con 3,75 y 0,94 para 4 procesos en la carga mayor. La arquitectura distribuida ya funciona de punta a punta en un solo equipo. Para la entrega final queda: medir en los cinco computadores (LAN y VPN), repetir el benchmark en equipos con más núcleos, calibrar el mercado laboral y ampliar las reglas por país.</p>
+<p>El avance cumple los tres elementos del módulo paralelo: una implementación en Python con <i>multiprocessing</i> y <i>threading</i>, una verificación de que el paralelismo no cambia el resultado y un reporte inicial de speedup y eficiencia en dos equipos: 3,76 y 0,94 con 4 procesos en un equipo de 4 núcleos, y un speedup máximo de 6,1 en un portátil de 16 núcleos, donde la medición mostró que el límite está en la memoria y la frecuencia más que en el código serial. Esa medición llevó a una optimización de caché que mejoró el escalamiento. La arquitectura distribuida ya funciona de punta a punta en un solo equipo. Para la entrega final queda: medir en los cinco computadores (LAN y VPN), repetir el benchmark con los equipos en reposo, calibrar el mercado laboral y ampliar las reglas por país.</p>
 
 <div class="ia">
 <p><b>Declaración de uso de inteligencia artificial.</b> El equipo usó un asistente de IA generativa (Claude, de Anthropic) como apoyo en partes del proyecto: escritura y depuración de partes del código, preparación de gráficas y redacción y revisión de este documento. No todo el trabajo se hizo con IA. La idea del proyecto, su alcance, la elección de las fuentes de datos y de los territorios, las decisiones de diseño y la revisión de los resultados son del equipo, que verificó el contenido entregado y responde por él.</p>
