@@ -12,6 +12,8 @@ import argparse
 import asyncio
 import csv
 import logging
+import queue
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -25,28 +27,56 @@ log = logging.getLogger("coordinador")
 
 
 class Registro:
-    """Escribe CSVs por corrida: macro, nodos, regiones, precios y eventos."""
+    """Escribe CSVs por corrida: macro, nodos, regiones, precios y eventos.
+
+    La escritura ocurre en un hilo aparte: si el disco se pone lento (OneDrive, Syncthing o el antivirus
+    revisando el CSV), el reloj no se detiene esperando al disco.
+    """
 
     def __init__(self, carpeta: Path):
         carpeta.mkdir(parents=True, exist_ok=True)
         self.carpeta = carpeta
         self.archivos, self.escritores = {}, {}
+        self.cola: queue.SimpleQueue = queue.SimpleQueue()
+        self.hilo = threading.Thread(target=self._escritor, name="registro-csv", daemon=True)
+        self.hilo.start()
+        self.cerrado = False
 
     def fila(self, nombre, d: dict):
-        if nombre not in self.escritores:
-            fh = (self.carpeta / f"{nombre}.csv").open("w", newline="", encoding="utf-8")
-            w = csv.DictWriter(fh, fieldnames=list(d.keys()), extrasaction="ignore")
-            w.writeheader()
-            self.archivos[nombre], self.escritores[nombre] = fh, w
-        self.escritores[nombre].writerow(d)
+        if not self.cerrado:
+            self.cola.put(("fila", nombre, d))
 
     def flush(self):
-        for fh in self.archivos.values():
-            fh.flush()
+        if not self.cerrado:
+            self.cola.put(("flush", None, None))
 
     def cerrar(self):
-        for fh in self.archivos.values():
-            fh.close()
+        if self.cerrado:
+            return
+        self.cerrado = True
+        self.cola.put(("fin", None, None))
+        self.hilo.join(timeout=10)
+
+    def _escritor(self):
+        while True:
+            op, nombre, d = self.cola.get()
+            try:
+                if op == "fila":
+                    if nombre not in self.escritores:
+                        fh = (self.carpeta / f"{nombre}.csv").open("w", newline="", encoding="utf-8")
+                        w = csv.DictWriter(fh, fieldnames=list(d.keys()), extrasaction="ignore")
+                        w.writeheader()
+                        self.archivos[nombre], self.escritores[nombre] = fh, w
+                    self.escritores[nombre].writerow(d)
+                elif op == "flush":
+                    for fh in self.archivos.values():
+                        fh.flush()
+                else:
+                    for fh in self.archivos.values():
+                        fh.close()
+                    return
+            except Exception:
+                log.exception("No pude escribir en el registro %s (la simulación sigue)", nombre)
 
 
 class Coordinador:

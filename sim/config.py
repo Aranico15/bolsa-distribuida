@@ -37,3 +37,19 @@ def sin_quickedit():
             k32.SetConsoleMode(h, (modo.value & ~0x40) | 0x80)
     except Exception:
         pass
+
+
+def prioridad_baja():
+    """Windows: baja la prioridad del proceso (y de sus subprocesos) a "por debajo de lo normal".
+
+    Si el PC se satura, Windows atiende primero al navegador y al dashboard, así los gráficos no se
+    traban; la simulación solo tarda unos milisegundos más en ese tick.
+    """
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        k32 = ctypes.windll.kernel32
+        k32.SetPriorityClass(k32.GetCurrentProcess(), 0x00004000)  # BELOW_NORMAL_PRIORITY_CLASS
+    except Exception:
+        pass

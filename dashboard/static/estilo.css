@@ -4,7 +4,13 @@
   --mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: radial-gradient(1200px 500px at 70% -10%, var(--brillo, #1a1f3a55), transparent 70%), var(--fondo); background-attachment: fixed; color: var(--texto); font: 13px/1.4 "Segoe UI", Inter, system-ui, sans-serif; }
+/* La barra de desplazamiento siempre reserva su espacio: si aparecía/desaparecía al cambiar el contenido,
+   todo el ancho cambiaba 17 px y los gráficos se redimensionaban (tirón + borroso). */
+html { scrollbar-gutter: stable; overflow-y: scroll; }
+/* El degradado va en una capa fija propia: con background-attachment: fixed el navegador repintaba toda la página. */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(1200px 500px at 70% -10%, var(--brillo, #1a1f3a55), transparent 70%), var(--fondo); }
+body { margin: 0; background: var(--fondo); color: var(--texto); font: 13px/1.4 "Segoe UI", Inter, system-ui, sans-serif; }
 .tenue { color: var(--tenue); }
 .barra { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px;
   background: #0d1119; border-bottom: 1px solid var(--borde); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }

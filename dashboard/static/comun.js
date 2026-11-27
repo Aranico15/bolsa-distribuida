@@ -74,14 +74,16 @@ function _colorVarCalc(v, max) {
 // ---------- gráficos (TradingView Lightweight Charts) ----------
 const LW = LightweightCharts;
 function crearGrafico(el, extra = {}) {
+  // autoSize: la librería mide el contenedor con devicePixelContentBox y dibuja a la resolución real de la
+  // pantalla (también al pasar la ventana al proyector o cambiar el zoom). Antes se redimensionaba a mano y
+  // el lienzo quedaba estirado (borroso) durante un cuadro en cada cambio de tamaño.
   const ch = LW.createChart(el, Object.assign({
-    width: el.clientWidth, height: el.clientHeight,
+    autoSize: true,
     layout: { background: { type: "solid", color: "transparent" }, textColor: "#8a94a8", fontFamily: "Inter, Segoe UI, sans-serif" },
     grid: { vertLines: { color: "#161c29" }, horzLines: { color: "#161c29" } },
     rightPriceScale: { borderColor: "#232b3d" }, timeScale: { borderColor: "#232b3d" },
     crosshair: { mode: LW.CrosshairMode.Normal },
   }, extra));
-  new ResizeObserver(() => ch.applyOptions({ width: el.clientWidth, height: el.clientHeight })).observe(el);
   return ch;
 }
 // update() falla si llega un punto más viejo que el último (nodo que se reincorpora): se ignora.

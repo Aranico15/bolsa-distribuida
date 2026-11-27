@@ -222,6 +222,7 @@ def main():
     ap.add_argument("--reanudar", action="store_true", help="continuar desde el último snapshot")
     a = ap.parse_args()
     config.sin_quickedit()
+    config.prioridad_baja()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     try:
         asyncio.run(main_async(a))
