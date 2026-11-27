@@ -41,6 +41,9 @@ def main():
     ap.add_argument("--procesos", type=int, default=1)
     ap.add_argument("--puerto", type=int, default=8000)
     a = ap.parse_args()
+    sys.path.insert(0, str(RAIZ))
+    from sim.config import sin_quickedit
+    sin_quickedit()  # un clic en la consola ya no congela la simulación
 
     env = dict(os.environ)
     env.setdefault("NATS_URL", "nats://127.0.0.1:4222")
@@ -89,17 +92,21 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        for nombre, p in reversed(procs):
-            if p.poll() is None:
-                if os.name == "nt":
-                    p.terminate()
-                else:
-                    p.send_signal(signal.SIGINT)
-        for _, p in procs:
-            try:
-                p.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                p.kill()
+        # Primero nodos, dashboard y reloj; NATS de último (si cae antes, todos quedan reintentando conexión).
+        def parar(lista):
+            for _, p in lista:
+                if p.poll() is None:
+                    if os.name == "nt":
+                        p.terminate()
+                    else:
+                        p.send_signal(signal.SIGINT)
+            for _, p in lista:
+                try:
+                    p.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    p.kill()
+        parar([x for x in procs if x[0] != "nats"])
+        parar([x for x in procs if x[0] == "nats"])
 
 
 if __name__ == "__main__":

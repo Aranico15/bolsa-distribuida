@@ -14,12 +14,59 @@ const SECTORES = { COM: "Comercio", EDU: "Educación", CON: "Construcción", SAL
   CEM: "Cemento", MAN: "Manufactura", AUT: "Automotriz", QUI: "Química", PES: "Pesca" };
 
 // ---------- formato ----------
-const fmt = (x, d = 2) => (x == null || isNaN(x)) ? "—" : Number(x).toLocaleString("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d });
+// Intl.NumberFormat en caché: toLocaleString crea un formateador nuevo en cada llamada (muy lento con cientos de celdas).
+const _fmts = {};
+const fmt = (x, d = 2) => (x == null || isNaN(x)) ? "—" :
+  (_fmts[d] || (_fmts[d] = new Intl.NumberFormat("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d }))).format(x);
 const pct = (x, d = 2) => (x == null || isNaN(x)) ? "—" : (x >= 0 ? "+" : "") + (100 * x).toFixed(d) + "%";
 const clase = (x) => x > 0 ? "sube" : x < 0 ? "baja" : "";
 const corto = (x) => { const a = Math.abs(x || 0); return a >= 1e12 ? fmt(x / 1e12, 1) + " B" : a >= 1e9 ? fmt(x / 1e9, 1) + " MM" : a >= 1e6 ? fmt(x / 1e6, 1) + " M" : a >= 1e3 ? fmt(x / 1e3, 1) + " k" : fmt(x, 0); };
 const decimales = (a) => a && a.mon === "USD" ? 2 : 1;
+// Ejecuta fn como mucho una vez cada `ms` (y solo cuando la pestaña está visible, vía requestAnimationFrame).
+// Los datos se actualizan en cada mensaje; lo que es caro de pintar (tablas, mapas) se pinta con este ritmo.
+function limitar(fn, ms) {
+  let ultimo = 0, pendiente = false;
+  const correr = () => { pendiente = false; ultimo = performance.now(); fn(); };
+  return (forzar) => {
+    if (forzar) return correr();
+    if (pendiente) return;
+    pendiente = true;
+    const espera = Math.max(0, ms - (performance.now() - ultimo));
+    setTimeout(() => requestAnimationFrame(correr), espera);
+  };
+}
+// Dos SVG apilados con el mismo viewBox: el de abajo (geografía, estático) no se vuelve a pintar cuando
+// se animan las líneas/pulsos del de arriba. Antes todo estaba en un solo SVG y el navegador repintaba
+// cientos de polígonos 60 veces por segundo.
+function capasMapa(el, W, H) {
+  const base = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "svg-mapa");
+  const arriba = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "svg-mapa svg-capa");
+  _capas.push(arriba.node());
+  return { base, arriba };
+}
+// Mueve las líneas punteadas de flujo a 12 cuadros por segundo, solo en la capa animada y con la pestaña visible.
+const _capas = [];
+(function animarFlujos() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let k = 0;
+  setInterval(() => {
+    if (document.hidden || !_capas.length) return;
+    k++;
+    for (const c of _capas) {
+      if (!c._tieneFlujos && !(c._tieneFlujos = !!c.querySelector(".flujo, .enlace-mundo"))) continue;
+      c.style.setProperty("--f1", (-(k * 28 / 14.4) % 28).toFixed(2));
+      c.style.setProperty("--f2", (-(k * 8 / 9.6) % 8).toFixed(2));
+    }
+  }, 1000 / 12);
+})();
+const _colorVar = new Map();
 function colorVar(v, max = 0.06) {
+  const clave = Math.round((v || 0) / max * 40) + "|" + max;   // 81 tonos bastan; se cachean
+  let c = _colorVar.get(clave);
+  if (!c) { c = _colorVarCalc(Math.round((v || 0) / max * 40) / 40 * max, max); _colorVar.set(clave, c); }
+  return c;
+}
+function _colorVarCalc(v, max) {
   const t = Math.min(Math.abs(v || 0) / max, 1);
   return v >= 0 ? d3.interpolateRgb("#17241f", "#16c784")(0.15 + 0.85 * t) : d3.interpolateRgb("#2a191c", "#ef4444")(0.15 + 0.85 * t);
 }
@@ -27,14 +74,16 @@ function colorVar(v, max = 0.06) {
 // ---------- gráficos (TradingView Lightweight Charts) ----------
 const LW = LightweightCharts;
 function crearGrafico(el, extra = {}) {
+  // autoSize: la librería mide el contenedor con devicePixelContentBox y dibuja a la resolución real de la
+  // pantalla (también al pasar la ventana al proyector o cambiar el zoom). Antes se redimensionaba a mano y
+  // el lienzo quedaba estirado (borroso) durante un cuadro en cada cambio de tamaño.
   const ch = LW.createChart(el, Object.assign({
-    width: el.clientWidth, height: el.clientHeight,
+    autoSize: true,
     layout: { background: { type: "solid", color: "transparent" }, textColor: "#8a94a8", fontFamily: "Inter, Segoe UI, sans-serif" },
     grid: { vertLines: { color: "#161c29" }, horzLines: { color: "#161c29" } },
     rightPriceScale: { borderColor: "#232b3d" }, timeScale: { borderColor: "#232b3d" },
     crosshair: { mode: LW.CrosshairMode.Normal },
   }, extra));
-  new ResizeObserver(() => ch.applyOptions({ width: el.clientWidth, height: el.clientHeight })).observe(el);
   return ch;
 }
 // update() falla si llega un punto más viejo que el último (nodo que se reincorpora): se ignora.
@@ -74,10 +123,14 @@ function conectar({ snapshot, delta }) {
     } else {
       st.glob = d.global || st.glob; Object.assign(st.nodos, d.nodos); st.activos = d.activos; st.colombia = d.colombia;
       st.regiones = d.regiones || st.regiones;
-      Object.entries(d.series_nodo || {}).forEach(([n, p]) => (st.series_nodo[n] = st.series_nodo[n] || []).push(p));
+      Object.entries(d.series_nodo || {}).forEach(([n, p]) => {
+        const s = (st.series_nodo[n] = st.series_nodo[n] || []);
+        s.push(p); if (s.length > 1200) s.splice(0, 400);   // sin tope crecía sin fin durante la presentación
+      });
       Object.entries(d.series_region || {}).forEach(([c, p]) => {
         const s = (st.series_region[c] = st.series_region[c] || []);
         if (!s.length || s[s.length - 1].t !== p.t) s.push(p);
+        if (s.length > 1200) s.splice(0, 400);
       });
       (d.mundo || []).forEach((m) => st.mundo.push(m));
       (d.politica || []).forEach((p) => st.politica.push(p));

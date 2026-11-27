@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
 import pickle
 import time
 from pathlib import Path
@@ -36,6 +37,7 @@ class ServicioNodo:
         self.archivo = self.dir_estado / f"{nodo_id}.pkl"
         sim = self.escenario["simulacion"]
         self.snapshot_cada = sim["snapshot_cada"]
+        self.ultimo_snapshot = 0.0
         self.banco = self.mundo = None
         if reanudar and self.archivo.exists():
             with self.archivo.open("rb") as fh:
@@ -68,10 +70,18 @@ class ServicioNodo:
         await self.bus.sub("estado.*", self.on_estado)
         await self.bus.sub("politica.colombia", self.on_politica)
         await self.bus.sub("mundo", self.on_mundo)
-        await self.bus.pub(f"sim.hola.{self.id}", {"nodo": self.id, "t": self.eco.t,
-                                                   "agentes": int(len(self.eco.tipo))})
+        await self.bus.sub("sim.quien", self.on_quien)
+        await self.bus.flush()
+        await self.anunciar()
         log.info("Nodo %s listo (%d agentes, %d empresas, %d procesos)", self.id, len(self.eco.tipo),
                  sum(e.viva for e in self.eco.empresas), self.eco.paralelo.trabajadores)
+
+    async def anunciar(self):
+        await self.bus.pub(f"sim.hola.{self.id}", {"nodo": self.id, "t": self.eco.t,
+                                                   "agentes": int(len(self.eco.tipo))})
+
+    async def on_quien(self, _, __):
+        await self.anunciar()
 
     async def on_ordenes(self, _, datos):
         self.ordenes_in.extend(datos)
@@ -155,18 +165,45 @@ class ServicioNodo:
         await self.bus.pub(f"sim.ack.{self.id}", {"t": t, "nodo": self.id, "ms": round(ms, 2),
                                                   "enviado": tick.get("enviado"), "agentes": int(len(self.eco.tipo)),
                                                   "bytes": self.bus.bytes_enviados})
-        if t % self.snapshot_cada == 0:
+        # Snapshot cada `snapshot_cada` ticks, pero no más de uno cada 15 s: a velocidad máxima se
+        # escribían ~0,7 MB por nodo cada 2 s (y OneDrive/Syncthing los resincronizaban sin parar).
+        if t % self.snapshot_cada == 0 and time.monotonic() - self.ultimo_snapshot >= 15:
+            self.ultimo_snapshot = time.monotonic()
             await asyncio.to_thread(self.guardar)
 
     def guardar(self):
         tmp = self.archivo.with_suffix(".tmp")
-        with tmp.open("wb") as fh:
-            pickle.dump({"eco": self.eco, "banco": self.banco, "mundo": self.mundo}, fh)
-        tmp.replace(self.archivo)
+        try:
+            with tmp.open("wb") as fh:
+                pickle.dump({"eco": self.eco, "banco": self.banco, "mundo": self.mundo}, fh)
+            for intento in range(3):  # en Windows, OneDrive/antivirus a veces bloquea el archivo un instante
+                try:
+                    tmp.replace(self.archivo)
+                    return
+                except PermissionError:
+                    time.sleep(0.2)
+            log.warning("No pude reemplazar %s (archivo bloqueado); se intenta en el próximo snapshot", self.archivo)
+        except Exception:
+            log.exception("Fallo guardando el snapshot (la simulación sigue)")
+
+
+def procesos_utiles(pedido, nodo_id):
+    """--procesos 0 = "los que sirvan": no más que núcleos ni que bloques de agentes del nodo.
+
+    Antes, en un Ryzen de 16 núcleos cada nodo abría 16 procesos para ~300 agentes (5 bloques de trabajo):
+    11 procesos ociosos por nodo comiendo RAM y arranque, sin ganar velocidad.
+    """
+    if pedido and pedido > 0:
+        return pedido
+    from .kernel import SUBBLOQUE
+    escenario, _ = config.cargar()
+    agentes = escenario["nodos"].get(nodo_id, {}).get("agentes", 0)
+    return max(1, min(os.cpu_count() or 1, -(-agentes // SUBBLOQUE)))
 
 
 async def main_async(a):
-    s = ServicioNodo(a.nodo, config.nats_url(a.nats), config.nats_token(a.token), a.procesos, a.dir_estado, a.reanudar)
+    s = ServicioNodo(a.nodo, config.nats_url(a.nats), config.nats_token(a.token),
+                     procesos_utiles(a.procesos, a.nodo), a.dir_estado, a.reanudar)
     await s.iniciar()
     try:
         await asyncio.Event().wait()
@@ -180,10 +217,12 @@ def main():
     ap.add_argument("--nodo", required=True, help="tunja | capitales | departamentos | colombia | internacional")
     ap.add_argument("--nats", help="URL(s) de NATS separadas por coma (o variable NATS_URL)")
     ap.add_argument("--token", help="token de NATS (o variable NATS_TOKEN)")
-    ap.add_argument("--procesos", type=int, default=1, help="procesos para el núcleo paralelo (0 = todos los núcleos)")
+    ap.add_argument("--procesos", type=int, default=1, help="procesos para el núcleo paralelo (0 = automático: los útiles según núcleos y agentes)")
     ap.add_argument("--dir-estado", default="estado")
     ap.add_argument("--reanudar", action="store_true", help="continuar desde el último snapshot")
     a = ap.parse_args()
+    config.sin_quickedit()
+    config.prioridad_baja()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     try:
         asyncio.run(main_async(a))
