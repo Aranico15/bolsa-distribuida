@@ -22,7 +22,7 @@ const mapa = { listo: false };
 cargarGeo().then((geo) => {
   const el = $("#mapa-red");
   const W = 1000, H = 560;
-  const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "svg-mapa");
+  const { base: svg, arriba } = capasMapa(el, W, H);
   const defs = svg.append("defs");
   const glow = defs.append("filter").attr("id", "brillo");
   glow.append("feGaussianBlur").attr("stdDeviation", 3).attr("result", "b");
@@ -53,7 +53,8 @@ cargarGeo().then((geo) => {
 
   const ciudades = geo.lugares.ciudades;
   const pt = (c) => pCol([c.lon, c.lat]);
-  const gCiud = gCol.append("g");
+  const gMundoF = arriba.append("g");   // conexiones Colombia → mundo (animadas: capa de arriba)
+  const gCiud = arriba.append("g");
   const ciudSel = gCiud.selectAll("g.ciudad").data(Object.entries(ciudades)).join("g").attr("class", "ciudad")
     .attr("transform", ([, c]) => `translate(${pt(c)})`)
     .on("mousemove", (ev, [cod, c]) => { const r = st.regiones[cod]; mostrarTip(ev, `<b>${c.nombre}</b><br>Censo 2018: ${fmt(c.pob2018, 0)} hab.`
@@ -72,8 +73,8 @@ cargarGeo().then((geo) => {
   };
   Object.values(anclas).forEach((a) => { a[0] = Math.max(82, Math.min(918, a[0])); a[1] = Math.max(26, Math.min(534, a[1])); });
   const origenes = { tunja: tun, capitales: bog, departamentos: ant, colombia: pCol([-73.5, 3.5]), internacional: [730, 52] };
-  const gFlujos = svg.append("g");
-  const gNodos = svg.append("g");
+  const gFlujos = arriba.append("g");
+  const gNodos = arriba.append("g");
   const ins = gNodos.selectAll("g.insignia").data(NODOS).join("g").attr("class", "insignia").style("--c", (n) => COLOR[n])
     .attr("transform", (n) => `translate(${anclas[n]})`).style("cursor", "pointer").on("click", (ev, n) => location.href = `/nodo/${n}`);
   ins.append("line").attr("class", "guia").attr("x1", 0).attr("y1", 0)
@@ -84,7 +85,6 @@ cargarGeo().then((geo) => {
   ins.append("text").attr("class", "n2").attr("y", 11).attr("text-anchor", "middle");
 
   // Conexiones desde Colombia a los países simulados.
-  const gMundoF = svg.append("g");
   const centro = (cod) => { const f = paises.features.find((p) => p.id === ISO_NUM[cod]); return f ? pMun(d3.geoCentroid(f)) : null; };
   const colMundo = centro("COL");
   const enlaces = Object.keys(ISO2).map((k) => ({ k, p: centro(k) })).filter((x) => x.p);
@@ -178,12 +178,15 @@ function tabla() {
   if (ui.busca) { const q = ui.busca.toLowerCase(); filas = filas.filter((a) => (a.tk + a.reg + a.sec + (SECTORES[a.sec] || "")).toLowerCase().includes(q)); }
   const [k, dir] = ui.orden;
   filas.sort((a, b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0) * dir);
-  $("#tabla-activos tbody").innerHTML = filas.slice(0, 300).map((a) => `<tr data-tk="${a.tk}" class="${a.tk === ui.sel ? "sel" : ""}">
+  const filaHtml = (a) => `<tr data-tk="${a.tk}" class="${a.tk === ui.sel ? "sel" : ""}">
     <td><span style="color:${COLOR[a.nodo]}">●</span> ${a.tk}</td><td class="num">${fmt(a.p, decimales(a))}</td>
     <td class="num ${clase(a.var)}">${pct(a.var)}</td><td class="num ${clase(a.var_total)}">${pct(a.var_total, 1)}</td>
-    <td class="num">${corto(a.v)}</td></tr>`).join("");
-  $("#tabla-activos tbody").querySelectorAll("tr").forEach((tr) => tr.onclick = () => seleccionar(tr.dataset.tk));
+    <td class="num">${corto(a.v)}</td></tr>`;
+  const html = filas.slice(0, 300).map(filaHtml).join("");
+  const tb = $("#tabla-activos tbody");
+  if (html !== tb._html) { tb.innerHTML = html; tb._html = html; }   // no tocar el DOM si nada cambió
 }
+$("#tabla-activos tbody").onclick = (ev) => { const tr = ev.target.closest("tr"); if (tr) seleccionar(tr.dataset.tk); };
 
 function cinta() {
   const top = Object.values(st.activos).sort((a, b) => b.cap - a.cap).slice(0, 30);
@@ -212,6 +215,13 @@ function pintarTreemap(forzar) {
 }
 
 // ---------- datos ----------
+// Lo caro (tablas, mapa, treemap) se pinta como mucho 1 vez por segundo, aunque la simulación vaya a máxima velocidad.
+let hayEventos = false, ultimaCinta = 0;
+const pintarPaneles = limitar(() => {
+  if (hayEventos) { $("#eventos").innerHTML = htmlEventos(st.eventos); hayEventos = false; }
+  kpis(); nodos(); tabla(); encabezadoSel(); pintarMapa(); pintarTreemap();
+  if (Date.now() - ultimaCinta > 8000) { cinta(); ultimaCinta = Date.now(); }
+}, 1000);
 conectar({
   snapshot(s) {
     Object.entries(s.series_nodo).forEach(([n, pts]) => sInd[n] && sInd[n].setData(pts.map((p) => ({ time: p.time, value: p.indice }))));
@@ -231,9 +241,8 @@ conectar({
       if (p.inflacion != null) upd(sInfl, { time: p.time, value: p.inflacion }); });
     const v = ui.sel && d.velas[ui.sel];
     if (v) velas.nueva(v);
-    if (d.eventos && d.eventos.length) $("#eventos").innerHTML = htmlEventos(s.eventos);
-    kpis(); nodos(); tabla(); encabezadoSel(); pintarMapa(); pintarTreemap();
-    if ((s.glob.t || 0) % 10 === 0) cinta();
+    if (d.eventos && d.eventos.length) hayEventos = true;
+    pintarPaneles();
   },
 });
 

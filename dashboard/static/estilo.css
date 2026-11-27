@@ -102,18 +102,22 @@ a.boton:hover { border-color: var(--c); }
 .mapa-red { grid-column: 1 / -1; }
 .lienzo-mapa { position: relative; width: 100%; }
 .svg-mapa { width: 100%; height: auto; display: block; }
+/* Capa animada encima del mapa (ver capasMapa en comun.js): capa propia en la GPU y sin capturar el ratón. */
+.svg-capa { position: absolute; top: 0; left: 0; width: 100%; height: auto; pointer-events: none; will-change: transform; }
+.svg-capa .ciudad, .svg-capa .insignia { pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .flujo, .enlace-mundo, .pulso, .pulso-grande, #cinta-contenido { animation: none !important; } }
 .esfera { fill: #0c1322; stroke: #1c2536; }
 .reticula { fill: none; stroke: #1a2232; stroke-width: .5; }
-.pais { stroke: #0b0e14; stroke-width: .5; transition: fill .6s; }
+.pais { stroke: #0b0e14; stroke-width: .5; }
 .pais.simulado { stroke: #3a3f5a; stroke-width: .8; cursor: pointer; }
 .pais.sel, .dep.sel { stroke: #fff; stroke-width: 2; }
 .pais:hover, .dep:hover, .muni:hover { filter: brightness(1.35); }
-.dep { stroke: #0a0d13; stroke-width: .6; transition: fill .6s; }
+.dep { stroke: #0a0d13; stroke-width: .6; }
 .dep.simulado { stroke: #4b5470; stroke-width: 1; cursor: pointer; }
-.muni { stroke: #0a0d13; stroke-width: .5; transition: fill .6s; }
+.muni { stroke: #0a0d13; stroke-width: .5; }
 .muni.destacado { stroke: #fff; stroke-width: 1.5; }
 .ciudad .pulso { fill: none; stroke: var(--c, #3b82f6); stroke-width: 1.5; animation: pulso 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-.ciudad .nucleo { fill: #fff; stroke-width: 2; transition: r .6s, fill .6s; }
+.ciudad .nucleo { stroke-width: 2; }
 .ciudad.tunja .nucleo { fill: #f5a524; }
 .pulso-grande { fill: none; stroke: #f5a524; stroke-width: 2; animation: pulso 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes pulso { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(2.6); opacity: 0; } }
@@ -126,9 +130,10 @@ a.boton:hover { border-color: var(--c); }
 .insignia .guia { stroke: var(--c); stroke-dasharray: 2 3; opacity: .6; }
 .insignia.caido rect { stroke: var(--rojo); fill: #2a0f12ee; }
 .insignia:hover rect { stroke-width: 2.5; }
-.flujo { fill: none; stroke-linecap: round; stroke-dasharray: 6 8; animation: fluir 1.2s linear infinite; }
+/* El movimiento lo da animarFlujos() en comun.js a 12 cuadros/s (una animación CSS repintaba todo a 60/s). */
+.flujo { fill: none; stroke-linecap: round; stroke-dasharray: 6 8; stroke-dashoffset: var(--f1, 0); }
 @keyframes fluir { to { stroke-dashoffset: -28; } }
-.enlace-mundo { fill: none; stroke: #a78bfa; stroke-width: 1; opacity: .35; stroke-dasharray: 3 5; animation: fluir 3s linear infinite; }
+.enlace-mundo { fill: none; stroke: #a78bfa; stroke-width: 1; opacity: .35; stroke-dasharray: 3 5; stroke-dashoffset: var(--f2, 0); }
 .col-mundo { fill: #f5a524; stroke: #fff; stroke-width: 1.5; }
 .fila text { fill: #c9d2e3; font-size: 12px; font-family: var(--mono); }
 .fila text.f2.sube { fill: var(--verde); } .fila text.f2.baja { fill: var(--rojo); }

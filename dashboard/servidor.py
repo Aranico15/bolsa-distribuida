@@ -220,6 +220,7 @@ def main():
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--puerto", type=int, default=8000)
     a = ap.parse_args()
+    config.sin_quickedit()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     uvicorn.run(crear_app(config.nats_url(a.nats), config.nats_token(a.token)), host=a.host, port=a.puerto,
                 log_level="warning")

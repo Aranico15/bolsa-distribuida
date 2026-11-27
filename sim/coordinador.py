@@ -79,6 +79,10 @@ class Coordinador:
         await self.bus.sub("mundo", self.on_mundo)
         await self.bus.sub("politica.colombia", self.on_politica)
         await self.bus.sub("eventos.*", self.on_eventos)
+        await self.bus.flush()
+        # Los nodos que arrancaron antes que el reloj ya mandaron su "hola" y nadie lo oyó:
+        # se les pide que se vuelvan a anunciar (evita que el reloj espere para siempre).
+        await self.bus.pub("sim.quien", {"t": self.t})
         log.info("Coordinador listo. Registro en %s", self.reg.carpeta)
 
     # ------------------------------------------------------------ mensajes
@@ -150,8 +154,12 @@ class Coordinador:
 
     async def correr(self):
         log.info("Esperando nodos... (arranca cuando haya al menos uno)")
+        espera = 0
         while not any(n["vivo"] for n in self.nodos.values()):
             await asyncio.sleep(0.5)
+            espera += 1
+            if espera % 4 == 0:
+                await self.bus.pub("sim.quien", {"t": self.t})
         await asyncio.sleep(1.5)  # deja que los demás se anuncien
         while not self.max_ticks or self.t < self.max_ticks:
             if self.pausado:
@@ -223,6 +231,7 @@ def main():
     ap.add_argument("--ticks", type=int, default=0, help="detener tras N ticks (0 = sin límite)")
     ap.add_argument("--dir-runs", default="runs")
     a = ap.parse_args()
+    config.sin_quickedit()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     try:
         asyncio.run(main_async(a))

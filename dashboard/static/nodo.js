@@ -87,7 +87,7 @@ cargarGeo().then((geo) => {
   GEO = geo;
   const el = $("#mapa");
   const W = 1000, H = 520;
-  const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "svg-mapa");
+  const { base: svg, arriba } = capasMapa(el, W, H);   // geografía abajo, animaciones arriba
   const R = () => st.regiones;
   const col = continental(geo.dep);
   const ciudades = geo.lugares.ciudades;
@@ -107,7 +107,7 @@ cargarGeo().then((geo) => {
         + (f.properties.cod === "15001" ? "<br>Nodo simulado" : ""))).on("mouseleave", ocultarTip);
     const tun = geo.boy.features.find((f) => f.properties.cod === "15001");
     const [cx, cy] = path.centroid(tun);
-    svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 14).attr("class", "pulso-grande");
+    arriba.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 14).attr("class", "pulso-grande");
     svg.append("text").attr("x", cx + 18).attr("y", cy - 10).attr("class", "rotulo-grande").text("TUNJA");
     // Recuadro: Boyacá dentro de Colombia.
     const pc = d3.geoMercator().fitExtent([[700, 40], [980, 480]], col);
@@ -132,7 +132,7 @@ cargarGeo().then((geo) => {
     let burb = null;
     if (NODO === "capitales" || NODO === "colombia") {
       const cods = NODO === "capitales" ? ["BOG", "MED", "CAL", "BAQ", "BUC", "CTG"] : ["BOG"];
-      burb = svg.append("g").selectAll("g").data(cods).join("g").attr("class", "ciudad")
+      burb = arriba.append("g").selectAll("g").data(cods).join("g").attr("class", "ciudad")
         .attr("transform", (c) => `translate(${pt(ciudades[c])})`).style("cursor", "pointer")
         .on("click", (ev, c) => NODO === "capitales" && filtrarRegion(c))
         .on("mousemove", (ev, c) => { const r = R()[c]; mostrarTip(ev, `<b>${ciudades[c].nombre}</b><br>Censo 2018: ${fmt(ciudades[c].pob2018, 0)} hab.`
@@ -193,10 +193,10 @@ cargarGeo().then((geo) => {
       .on("mouseleave", ocultarTip).on("click", (ev, f) => codPorId[f.id] && codPorId[f.id] !== "COL" && filtrarRegion(codPorId[f.id]));
     const centro = (c) => proj(d3.geoCentroid(paises.features.find((p) => p.id === ISO_NUM[c])));
     const co = centro("COL");
-    const arcos = svg.append("g").selectAll("path").data(Object.keys(ISO2)).join("path").attr("class", "flujo")
+    const arcos = arriba.append("g").selectAll("path").data(Object.keys(ISO2)).join("path").attr("class", "flujo")
       .attr("d", (c) => { const [x2, y2] = centro(c); const mx = (co[0] + x2) / 2, my = Math.min(co[1], y2) - 60; return `M${co[0]},${co[1]} Q${mx},${my} ${x2},${y2}`; });
-    svg.append("circle").attr("cx", co[0]).attr("cy", co[1]).attr("r", 6).attr("class", "col-mundo");
-    const et = svg.append("g").selectAll("text").data(Object.keys(ISO2)).join("text").attr("class", "rotulo")
+    arriba.append("circle").attr("cx", co[0]).attr("cy", co[1]).attr("r", 6).attr("class", "col-mundo");
+    const et = arriba.append("g").selectAll("text").data(Object.keys(ISO2)).join("text").attr("class", "rotulo")
       .attr("x", (c) => centro(c)[0] + 6).attr("y", (c) => centro(c)[1] - 6).text((c) => c);
     mapa.pintar = () => {
       const reg = R();
@@ -346,9 +346,11 @@ function red() {
 
 // ---------- datos ----------
 function eventos() { $("#eventos").innerHTML = htmlEventos(st.eventos.filter((e) => e.nodo === NODO || (e.tipo === "choque") || e.texto.includes(NODO))); }
-function todo() {
+function todoAhora() {
   actualizarReloj(); heroe(); regiones(); tabla(); encabezadoSel(); mapa.pintar(); pintarTreemap(); especial(); red();
 }
+// Lo caro se pinta como mucho 1 vez por segundo aunque la simulación vaya a máxima velocidad.
+const todo = limitar(todoAhora, 1000);
 conectar({
   snapshot(s) {
     misRegiones().forEach((cod, i) => serieRegion(cod, i).setData((s.series_region[cod] || []).filter((p) => p.time).map((p) => ({ time: p.time, value: p.indice }))));
@@ -356,7 +358,7 @@ conectar({
     sInfl.setData(sn.map((p) => ({ time: p.time, value: p.inflacion })));
     sDes.setData(sn.map((p) => ({ time: p.time, value: p.desempleo })));
     if (!ui.sel) { const top = misActivos().sort((a, b) => b.cap - a.cap)[0]; if (top) seleccionar(top.tk); }
-    eventos(); todo(); pintarTreemap(true);
+    eventos(); todo(true); pintarTreemap(true);
   },
   delta(s, d) {
     misRegiones().forEach((cod, i) => { const p = (d.series_region || {})[cod]; if (p && p.time) upd(serieRegion(cod, i), { time: p.time, value: p.indice }); });

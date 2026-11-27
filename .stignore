@@ -1,0 +1,11 @@
+// Syncthing: no sincronizar entre los PCs lo que cada uno genera al correr.
+// (Copiar este archivo en la carpeta compartida de CADA PC; Syncthing no lo comparte solo.)
+.venv
+runs
+estado
+**/runs
+**/estado
+__pycache__
+*.tmp
+*.pkl
+*.sync-conflict-*
